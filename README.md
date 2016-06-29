@@ -18,7 +18,7 @@ Your Mac should probably have these Python libraries already. However, upon runn
 
 ### Setup
 
-1. Download the `[CasperAPI_CLI.py](https://github.com/eventbrite/Casper-API-CLI/blob/master/CasperAPI_CLI.py)` and `[SetupCasperAPI.py](https://github.com/eventbrite/Casper-API-CLI/blob/master/SetupCasperAPI.py)` scripts from this repository.
+1. Download the [CasperAPI_CLI.py](https://github.com/eventbrite/Casper-API-CLI/blob/master/CasperAPI_CLI.py) and [SetupCasperAPI.py](https://github.com/eventbrite/Casper-API-CLI/blob/master/SetupCasperAPI.py) scripts from this repository.
 2. Place that folder inside an encrypted disk image for security purposes. 
 
   To create an encrypted disk image, you can use the following command to create a 10MB encrypted container named casperapi.dmg that is mounted as a volume called "CasperAPI" and then create a second 10MB encrypted container named keys.dmg that is mounted as a volume called "Keys". The setup script will store the encryption keys to decrypt your JSS password in this container.
@@ -30,7 +30,8 @@ Your Mac should probably have these Python libraries already. However, upon runn
   You will then be prompted to enter a password for your encrypted container:
 
 
-  ```Enter a new password to secure "casperapi.dmg":
+  ```
+  Enter a new password to secure "casperapi.dmg":
   Re-enter new password:
   ........................................................................................................................................................................................................................................................................................
   created: /Users/casper/Documents/casperapi.dmg
@@ -44,17 +45,23 @@ Your Mac should probably have these Python libraries already. However, upon runn
 
   Mount the newly created casper api disk image:
 
-  ```hdiutil attach casperapi.dmg```
+  ```
+  hdiutil attach casperapi.dmg
+  ```
 
   You will be prompted for the password to mount the volume.
 
   Mount the newly created keys disk image:
 
-  ```hdiutil attach keys.dmg```
+  ```
+  hdiutil attach keys.dmg
+  ```
 
   Navigate to the CasperAPI mounted volume:
 
-  ```cd /Volumes/CasperAPI/```
+  ```
+  cd /Volumes/CasperAPI/
+  ```
 
   Then create a folder to copy the Casper API scripts and navigate to that folder:
 
@@ -65,11 +72,15 @@ Your Mac should probably have these Python libraries already. However, upon runn
 
   Download the latest release via curl or via the web:
 
-  ```curl -L https://github.com/eventbrite/Casper-API-CLI/archive/v0.1.0.zip -o casperapi.zip``` 
+  ```
+  curl -L https://github.com/eventbrite/Casper-API-CLI/archive/v0.1.0.zip -o casperapi.zip
+  ``` 
 
   Place the scripts `CasperAPI_CLI.py` and `SetupCasperAPI.py` in this container. To unzip it via command line:
 
-  ```unzip casperapi.zip``` 
+  ```
+  unzip casperapi.zip
+  ``` 
 
 3. Generate an encrypted string for your JSS password using `SetupCasperAPI.py`. To get started, navigate to your encrypted container in Terminal and enter the following command:
 
