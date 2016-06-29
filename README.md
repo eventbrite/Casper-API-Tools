@@ -1,22 +1,50 @@
-# Casper API CLI
+# Casper API Command Line Tool
 
-What is it?
------------
+## What is it?
 
-This is a command line tool for interacting with the JSS via the command line.
+This is a command line tool for interacting with the JSS via the command line using the Casper Suite API provided by JAMF Software. The Casper API Command Line Tool was developed to enable the Eventbrite IT Team ("BriteTech") to manage certain aspects in the JSS programmatically - getting information on existing computers in the JSS, updating information, and cleaning up obsolete computer records.
+
+## Table of Contents
+
+- [Setup](#setup)
+  - [Dependencies](#dependencies)
+- [Usage](#usage)
+  - [Commands](#commands)
+    - [Delete a Computer by JSS ID](#delete-a-computer-by-jss-id)
+    - [Delete Computers by JSS ID using a CSV File](#delete-computers-by-jss-id-using-a-csv-file)
+    - [Get a Computer](#get-a-computer)
+    - [Unmanage a Computer by JSS ID](#unmanage-a-computer-by-jss-id)
+    - [Unmanage Computers by JSS ID using a CSV File](#unmanage-computers-by-jss-id-using-a-csv-file)
+    - [Update Asset Tag of a Computer using JSS ID](#update-asset-tag-of-a-computer-using-jss-id)
+- [Credits](#credits)
+- [License](#license)
+
+## Setup
 
 ### Dependencies
 
-The Casper API CLI has been tested on Python 2.7.10 and Mac OS X El Capitan, and requires specific Python libraries.
+The Casper API CLI has been tested on the following combinations:
 
-- urllib2
+- Python 2.7.10 with Mac OS X El Capitan 10.11.4
+- Python 2.7.5 with Mac OS X Mavericks 10.9.5
+
+It also leverages specific Python libraries.
+
+- argparse
 - base64
+- csv
+- datetime
+- inspect
+- getpass
+- os
+- subprocess
+- urllib2
 - xml.etree
 - xml.dom
 
 Your Mac should probably have these Python libraries already. However, upon running it the first time, you may be prompted to install some of these libraries. You can typically install them using `pip install LIBRARYNAME` or `easy-install LIBRARYNAME`.
 
-## Setup
+### Configuration Instructions
 
 1. Download the latest release of the Casper API Command Line Tools here: https://github.com/eventbrite/Casper-API-Tools/releases. Alternatively, you can download the two scripts: [CasperAPI_CLI.py](https://github.com/eventbrite/Casper-API-CLI/blob/master/CasperAPI_CLI.py) and [SetupCasperAPI.py](https://github.com/eventbrite/Casper-API-CLI/blob/master/SetupCasperAPI.py) scripts from this repository. 
 2. Place that folder inside an encrypted disk image for security purposes. Following these steps will keep your encrypted password and the keys to decrypt that password in separate locations.
