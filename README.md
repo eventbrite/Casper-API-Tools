@@ -8,6 +8,7 @@ This is a command line tool for interacting with the JSS via the command line us
 
 - [Setup](#setup)
   - [Dependencies](#dependencies)
+  - [Configuration Instructions](#configuration-instructions)
 - [Usage](#usage)
   - [Commands](#commands)
     - [Delete a Computer by JSS ID](#delete-a-computer-by-jss-id)
@@ -267,7 +268,6 @@ casper updateassettag 123 50505
 ```
 
 Updates the asset tag of JSS computer ID 123 to the number 50505.
-
 
 
 ## Credits
