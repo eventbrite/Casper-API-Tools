@@ -63,13 +63,6 @@ Your Mac should probably have these Python libraries already. However, upon runn
   cd /Volumes/CasperAPI/
   ```
 
-  Then create a folder to copy the Casper API scripts and navigate to that folder:
-
-  ```
-  mkdir CasperAPI_CLI
-  cd CasperAPI_CLI
-  ```
-
   Copy the scripts `CasperAPI_CLI.py` and `SetupCasperAPI.py` in this container. To unzip it via command line:
 
 3. Generate an encrypted string for your JSS password using `SetupCasperAPI.py`. To get started, navigate to your encrypted container in Terminal and enter the following command:
@@ -84,6 +77,7 @@ Your Mac should probably have these Python libraries already. However, upon runn
   - Your JSS username
   - Your JSS password
   - The path to a location different than the location where you've set up the CasperAPI_CLI script to store your encryption keys. We set this up above as `/Volumes/Keys`
+
 
 
   ```
@@ -101,7 +95,7 @@ Your Mac should probably have these Python libraries already. However, upon runn
 4. To make it easier to call the Casper API CLI, set an alias in your bash profile. Open the file ~/.bash_profile in a text editor, and add the line:
 
   ```
-  alias casper="python /Volumes/CasperAPI/CasperAPI_CLI/CasperAPI_CLI.py"
+  alias casper="python /Volumes/CasperAPI/CasperAPI_CLI.py"
   ```
 
   where you enter the full path to the downloaded `CasperAPI_CLI.py` script.
