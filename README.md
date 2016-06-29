@@ -18,7 +18,7 @@ Your Mac should probably have these Python libraries already. However, upon runn
 
 ### Setup
 
-1. Download the [CasperAPI_CLI.py](https://github.com/eventbrite/Casper-API-CLI/blob/master/CasperAPI_CLI.py) and [SetupCasperAPI.py](https://github.com/eventbrite/Casper-API-CLI/blob/master/SetupCasperAPI.py) scripts from this repository.
+1. Download the latest release of the Casper API Command Line Tools here: https://github.com/eventbrite/Casper-API-Tools/releases. Alternatively, you can download the two scripts: [CasperAPI_CLI.py](https://github.com/eventbrite/Casper-API-CLI/blob/master/CasperAPI_CLI.py) and [SetupCasperAPI.py](https://github.com/eventbrite/Casper-API-CLI/blob/master/SetupCasperAPI.py) scripts from this repository. 
 2. Place that folder inside an encrypted disk image for security purposes. 
 
   To create an encrypted disk image, you can use the following command to create a 10MB encrypted container named casperapi.dmg that is mounted as a volume called "CasperAPI" and then create a second 10MB encrypted container named keys.dmg that is mounted as a volume called "Keys". The setup script will store the encryption keys to decrypt your JSS password in this container.
@@ -70,17 +70,7 @@ Your Mac should probably have these Python libraries already. However, upon runn
   cd CasperAPI_CLI
   ```
 
-  Download the latest release via curl or via the web:
-
-  ```
-  curl -L https://github.com/eventbrite/Casper-API-CLI/archive/v0.1.0.zip -o casperapi.zip
-  ``` 
-
-  Place the scripts `CasperAPI_CLI.py` and `SetupCasperAPI.py` in this container. To unzip it via command line:
-
-  ```
-  unzip casperapi.zip
-  ``` 
+  Copy the scripts `CasperAPI_CLI.py` and `SetupCasperAPI.py` in this container. To unzip it via command line:
 
 3. Generate an encrypted string for your JSS password using `SetupCasperAPI.py`. To get started, navigate to your encrypted container in Terminal and enter the following command:
 
