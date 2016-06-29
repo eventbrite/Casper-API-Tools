@@ -16,10 +16,10 @@ The Casper API CLI has been tested on Python 2.7.10 and Mac OS X El Capitan, and
 
 Your Mac should probably have these Python libraries already. However, upon running it the first time, you may be prompted to install some of these libraries. You can typically install them using `pip install LIBRARYNAME` or `easy-install LIBRARYNAME`.
 
-### Setup
+## Setup
 
 1. Download the latest release of the Casper API Command Line Tools here: https://github.com/eventbrite/Casper-API-Tools/releases. Alternatively, you can download the two scripts: [CasperAPI_CLI.py](https://github.com/eventbrite/Casper-API-CLI/blob/master/CasperAPI_CLI.py) and [SetupCasperAPI.py](https://github.com/eventbrite/Casper-API-CLI/blob/master/SetupCasperAPI.py) scripts from this repository. 
-2. Place that folder inside an encrypted disk image for security purposes. 
+2. Place that folder inside an encrypted disk image for security purposes. Following these steps will keep your encrypted password and the keys to decrypt that password in separate locations.
 
   To create an encrypted disk image, you can use the following command to create a 10MB encrypted container named casperapi.dmg that is mounted as a volume called "CasperAPI" and then create a second 10MB encrypted container named keys.dmg that is mounted as a volume called "Keys". The setup script will store the encryption keys to decrypt your JSS password in this container.
 
@@ -43,7 +43,7 @@ Your Mac should probably have these Python libraries already. However, upon runn
   hdiutil create keys.dmg -encryption -size 10MB -volname "Keys" -fs JHFS+
   ```
 
-  Mount the newly created casper api disk image:
+  Mount the newly created casper api disk image by double-clicking casperapi.dmg or running the following command:
 
   ```
   hdiutil attach casperapi.dmg
@@ -51,7 +51,7 @@ Your Mac should probably have these Python libraries already. However, upon runn
 
   You will be prompted for the password to mount the volume.
 
-  Mount the newly created keys disk image:
+  Mount the newly created keys disk image by double-clicking keys.dmg or running the following command:
 
   ```
   hdiutil attach keys.dmg
@@ -78,10 +78,10 @@ Your Mac should probably have these Python libraries already. However, upon runn
   - Your JSS password
   - The path to a location different than the location where you've set up the CasperAPI_CLI script to store your encryption keys. We set this up above as `/Volumes/Keys`
 
-
+  The interaction looks like this:
 
   ```
-  hostname:CasperAPI_CLI host$ python SetupCasperAPI.py
+  $ python SetupCasperAPI.py
   Welcome to the Casper CLI setup. Please note that this will overwrite any configuration files you have previously configured.
 
   Enter JSS URL in the form yourjss.jamfcloud.com: yourjss.jamfcloud.com
@@ -110,6 +110,12 @@ Your Mac should probably have these Python libraries already. However, upon runn
 
   ```
   casper getcomputer YOURUSERNAME
+  ```
+
+6. When you are done running any API commands, simply eject /Volumes/Keys, and no one will be able to run `casper` commands. You can eject the Keys volume in Finder or by typing:
+
+  ```
+  hdiutil unmount /Volumes/Keys
   ```
 
 ## Usage
