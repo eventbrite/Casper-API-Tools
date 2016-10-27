@@ -1,5 +1,5 @@
 #!/usr/bin/python
-
+# Casper API Tools version 0.1.2
 ## Import libraries for basic command line functions
 import sys
 import getpass
