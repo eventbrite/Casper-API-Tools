@@ -151,6 +151,38 @@ Your Mac should probably have these Python libraries already. However, upon runn
 
 ### Commands
 
+#### Add a Computer to a Static Group
+
+This adds a single computer to the specified Static Group. It will exit if your search string for the computer or the group results in zero or more than one result.
+
+##### Syntax
+
+```
+casper addcomputertogroup COMPUTERNAME GROUPNAME
+```
+
+##### Example
+
+```
+casper addcomputertogroup "Jason's Computer" "San Francisco Macs"
+```
+
+#### Add a Mobile Device to a Static Group
+
+This adds a single mobile device to the specified Static Group. It will exit if your search string for the mobile device or the group results in zero or more than one result.
+
+##### Syntax
+
+```
+casper addmobiledevicetogroup COMPUTERNAME GROUPNAME
+```
+
+##### Example
+
+```
+casper addmobiledevicetogroup "Jason's Phone" "San Francisco iPhones"
+```
+
 #### Delete a Computer by JSS ID
 
 This deletes a computer record from the JSS using the JSS computer ID. 
@@ -209,6 +241,108 @@ casper getcomputer jason -d yes
 ```
 
 Returns all computers matching the string `jason` with full detail.
+
+#### Get a Computer Group JSS ID
+
+This returns the JSS ID of the computer group specified. If the search results in zero or more than one result, it will exit and display a message informing you.
+
+##### Syntax
+
+```
+casper getcomputergroupid COMPUTERGROUPNAME
+```
+
+#### Get a Mobile Device
+
+This returns information for all mobile devices matching the search string. To search using a wildcard, enter * as part of the search parameter.
+
+##### Syntax
+
+```
+casper getmobiledevice MOBILEDEVICESEARCHSTRING
+```
+
+##### Example
+
+```
+casper getmobiledevice jason*
+```
+
+This returns information on all mobile devices with `jason` as part of the mobile device information.
+
+```
+Mobile Device Name: jason-12345
+Serial Number: F123ABC4DEF
+Mac Address: 12:34:56:78:AB:CD
+JSS Mobile Device ID: 99
+
+Mobile Device Name: jason-98765
+Serial Number: F123ASD4DEF
+Mac Address: 11:22:33:78:AB:CD
+JSS Mobile Device ID: 77
+```
+
+#### Get a Mobile Device by JSS ID
+
+This returns information for a mobile device matching the specified JSS ID.
+
+##### Syntax
+
+```
+casper getmobiledevicebyid JSSID
+```
+
+#### Get a Mobile Device Group
+
+This returns the group ID and a list of all members of a Mobile Device group, in a csv formatted list with in the format: `Device Name, JSS ID, Serial Number`
+
+##### Syntax
+
+```
+casper getmobiledevicegroup MOBILEDEVICEGROUPNAME
+```
+
+##### Example
+
+```
+casper getmobiledevicegroup "Jason's Test Group"
+```
+
+Output:
+
+```
+Getting mobile device group named: Jason's Test Group...
+Group ID: 20
+All devices in group Jason's Test Group [name, jss_id, serial_no]:
+
+jason-12344, 123, ABCDEFHIJKLM
+```
+
+#### Remove a Computer from a Group
+
+This removes the specified computer from the specified group. If the specified computer or group does not exist or results in multiple matches, it will exit.
+
+##### Syntax
+
+```
+casper removecomputerfromgroup COMPUTERNAME GROUPNAME
+```
+
+##### Example
+
+```
+casper removecomputerfromgroup "Jason's Computer" "Jason's Test Group"
+```
+
+#### Remove a Mobile Device from a Group
+
+This removes the specified mobile device from the specified group. If the specified mobile device or group does not exist or results in multiple matches, it will exit.
+
+##### Syntax
+
+```
+casper removemobiledevicefromgroup MOBILEDEVICENAME GROUPNAME
+```
 
 #### Unmanage a Computer by JSS ID
 
@@ -269,6 +403,79 @@ casper updateassettag 123 50505
 
 Updates the asset tag of JSS computer ID 123 to the number 50505.
 
+#### Update Computer User Information
+
+Updates the information associated with a computer record in the JSS. The only required argument is the computer ID, the following arguments are optional: USERNAME, REAL_NAME, EMAIL_ADDRESS, POSITION, PHONE, DEPARTMENT, BUILDING, ROOM, OVERWRITE.
+
+##### Syntax
+
+```
+casper updatecomputeruserinfo COMPUTERID [-u USERNAME, -n REAL_NAME, -e EMAIL_ADDRESS, -p POSITION, -t PHONE, -d DEPARTMENT, -b BUILDING, -r ROOM, -o OVERWRITE]
+```
+
+The last parameter, `-o`, tells the JSS to either overwrite all existing information as specified [if you enter `y` as the parameter], or whether to simply update the arguments specified [if you enter `n` as the parameter]. For example, if you want to just update the username but leave all the other options untouched, you would enter:
+
+```
+casper updatecomputeruserinfo 123 -u "jason" -o n
+```
+
+But if you wanted to fill all the unspecified arguments with blanks, you would enter:
+
+```
+casper updatecomputeruserinfo 123 -u "jason" -o y
+```
+
+#### Update Computer User Information from a CSV File
+
+Updates the information associated with a computer record using a CSV file with 9 columns: JSS Computer ID, Username, Full Name, Email, Position, Phone, Department, Building, Room, Overwrite
+
+##### Syntax
+
+```
+casper updatecomputeruserinfofromcsv PATHTOCSVFILE/CSVFILE.csv
+```
+
+#### Update Mobile Device Asset Tag
+
+Updates the specified mobile device with an asset tag number
+
+##### Syntax
+
+```
+casper updatemobileassettag MOBILEDEVICE ASSETTAG
+```
+
+#### Update Mobile Device User Information
+
+Updates the information associated with a mobile device record in the JSS. The only required argument is the computer ID, the following arguments are optional: USERNAME, REAL_NAME, EMAIL_ADDRESS, POSITION, PHONE, DEPARTMENT, BUILDING, ROOM, OVERWRITE.
+
+##### Syntax
+
+```
+casper updatemobiledeviceuserinfo MOBILEDEVICEID [-u USERNAME, -n REAL_NAME, -e EMAIL_ADDRESS, -p POSITION, -t PHONE, -d DEPARTMENT, -b BUILDING, -r ROOM, -o OVERWRITE]
+```
+
+The last parameter, `-o`, tells the JSS to either overwrite all existing information as specified [if you enter `y` as the parameter], or whether to simply update the arguments specified [if you enter `n` as the parameter]. For example, if you want to just update the username but leave all the other options untouched, you would enter:
+
+```
+casper updatemobiledeviceuserinfo 456 -u "jason" -o n
+```
+
+But if you wanted to fill all the unspecified arguments with blanks, you would enter:
+
+```
+casper updatemobiledeviceuserinfo 456 -u "jason" -o y
+```
+
+#### Update Mobile Device User Information from a CSV File
+
+Updates the information associated with a mobile device record using a CSV file with 9 columns: JSS Mobile Device ID, Username, Full Name, Email, Position, Phone, Department, Building, Room, Overwrite
+
+##### Syntax
+
+```
+casper updatemobiledeviceuserinfofromcsv PATHTOCSVFILE/CSVFILE.csv
+```
 
 ## Credits
 
