@@ -1,5 +1,17 @@
 #!/usr/bin/python
-# Casper API Tools version 0.1.2
+# Casper API Tools version 0.1.4
+
+##############################################################
+##############################################################
+#
+# Casper API Tools Command Line Inteface
+# https://github.com/eventbrite/Casper-API-Tools
+# Original Script created by: Jason Kuo
+# Updated 11/08/2016
+#
+##############################################################
+##############################################################
+
 ## Import libraries for basic command line functions
 import sys
 import getpass
@@ -698,9 +710,11 @@ def getMobileDeviceGroup(mobile_device_group_name, username, password):
 		responseXml = etree.fromstring(baseXml)
 
 		mobileDeviceGroupId = responseXml.find('id').text
-		mobileDeviceGroupSize = responseXml.find('criteria/size').text
+		mobileDeviceGroupSize = responseXml.find('mobile_devices/size').text
 
-		if mobileDeviceGroupSize == '0':
+		#print prettify(responseXml)
+
+		if str(mobileDeviceGroupSize) == '0':
 			print 'No devices in this group'
 			return mobileDeviceGroupId
 
@@ -850,6 +864,70 @@ def updateMobileAssetTag(mobileSearch, asset_tag, username, password):
 		return
 	else:
 		print 'Successfully updated asset tag for mobile device ' + mobileSearch + '.'
+
+def updateMobileDeviceInventory(mobileSearch, username, password):
+	print 'Issuing Update Inventory command for mobile device ' + mobileSearch + ' ...'
+	mobile_id = getMobileDeviceId(mobileSearch, username, password)
+	if str(mobile_id) == '-1':
+		print 'Mobile device ' + mobileSearch + ' not found, please try again.'
+		return -1
+	elif str(mobile_id) == '-2':
+		print 'More than one mobile device matching search string ' + str(mobileSearch) + ', please try again.'
+		return -1
+
+	#postStr = jss_api_base_url + '/mobiledevicecommands/command/UpdateInventory/id/' + mobile_id
+	postStr = jss_api_base_url + '/mobiledevicecommands/command/UpdateInventory'
+
+	postXML = "<mobile_device_command><command>UpdateInventory</command><mobile_devices><mobile_device><id>" + mobile_id + "</id></mobile_device></mobile_devices></mobile_device_command>"
+	#print postStr
+	#print postXML
+	#return
+
+	response = sendAPIRequest(postStr, username, password, 'POST', postXML)
+
+	if response == -1:
+		print 'Failed to issued update inventory command for device ' + mobileSearch
+		return -1
+	else:
+		print 'Successfully issued update inventory command for device ' + mobileSearch
+		return 1
+
+def lockMobileDevice(mobileSearch, username, password):
+	print 'Searching for mobile device ' + mobileSearch + '...'
+	mobile_id = getMobileDeviceId(mobileSearch, username, password)
+	if str(mobile_id) == '-1':
+		print 'Mobile device ' + mobileSearch + ' not found, please try again.'
+		return -1
+	elif str(mobile_id) == '-2':
+		print 'More than one mobile device matching search string ' + str(mobileSearch) + ', please try again.'
+		return -1
+
+	postStr = jss_api_base_url + '/mobiledevicecommands/command/DeviceLock'
+	postXML = "<mobile_device_command><command>DeviceLock</command><mobile_devices><mobile_device><id>" + mobile_id + "</id></mobile_device></mobile_devices></mobile_device_command>"
+	#print postStr
+	#print postXML
+	#return
+
+	getMobileDeviceByID(mobile_id, username, password)
+
+	usrInput = raw_input('\nAre you sure you want to lock the mobile device listed above? [y/n]: ')
+	if usrInput == 'y':
+		print 'Issuing remote lock command...'
+		return 1
+		response = sendAPIRequest(postStr, username, password, 'POST', postXML)
+
+		if response == -1:
+			print 'Failed to issued lock command for device ' + mobileSearch
+			return -1
+		else:
+			print 'Successfully issued lock command for device ' + mobileSearch
+			return 1
+	else:
+		print 'Aborting request to lock mobile device...'
+		return -1
+
+	
+
 
 ## GROUPS
 
@@ -1341,6 +1419,10 @@ def main():
 	parser_getmobiledevicegroup.set_defaults(cmd='getmobiledevicegroup')
 	parser_getmobiledevicegroup.add_argument('mobilegroupsearch', help='Search string for mobile device group')
 
+	parser_lockmobiledevice = subparsers.add_parser('lockmobiledevice', help='Lock a single mobile device')
+	parser_lockmobiledevice.set_defaults(cmd='lockmobiledevice')
+	parser_lockmobiledevice.add_argument('mobileSearch', help='Mobile Device to issue lock command to')
+
 	parser_removecomputerfromgroup = subparsers.add_parser('removecomputerfromgroup', help='Remove a computer from a group')
 	parser_removecomputerfromgroup.set_defaults(cmd='removecomputerfromgroup')
 	parser_removecomputerfromgroup.add_argument('computerSearch', help='Computer to remove')
@@ -1381,6 +1463,10 @@ def main():
 	parser_updatemobileassettag.set_defaults(cmd='updatemobileassettag')
 	parser_updatemobileassettag.add_argument('mobileSearch', help='Mobile Device to add asset tag to')
 	parser_updatemobileassettag.add_argument('assetTag', help='Asset Tag')
+
+	parser_updatemobiledeviceinventory = subparsers.add_parser('updatemobiledeviceinventory', help='Issue update mobile device inventory command to a single device')
+	parser_updatemobiledeviceinventory.set_defaults(cmd='updatemobiledeviceinventory')
+	parser_updatemobiledeviceinventory.add_argument('mobileSearch', help='Mobile Device to issue update inventory command to')
 
 	parser_updatemobiledeviceuserinfo = subparsers.add_parser('updatemobiledeviceuserinfo', help='Update User and Location Info')
 	parser_updatemobiledeviceuserinfo.set_defaults(cmd='updatemobiledeviceuserinfo')
@@ -1460,6 +1546,9 @@ def main():
 	elif APIcommand == 'getmobiledevicegroup':
 		mobileDeviceGroup = args.mobilegroupsearch
 		getMobileDeviceGroup(mobileDeviceGroup, user, password)
+	elif APIcommand == 'lockmobiledevice':
+		mobileSearch = args.mobileSearch
+		lockMobileDevice(mobileSearch, user, password)
 	elif APIcommand == 'removecomputerfromgroup':
 		computerSearch = args.computerSearch
 		computerGroupSearch = args.computerGroupSearch
@@ -1512,6 +1601,9 @@ def main():
 	elif APIcommand == 'updatemobiledeviceuserinfofromcsv':
 		mobileDevicesCSV = args.csvfile
 		updateMobileDeviceUserInfoFromCSV(mobileDevicesCSV, user, password)
+	elif APIcommand == 'updatemobiledeviceinventory':
+		mobileSearch = args.mobileSearch
+		updateMobileDeviceInventory(mobileSearch, user, password)
 	else:
 		print 'Unknown command.'
 
