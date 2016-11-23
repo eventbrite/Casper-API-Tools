@@ -33,7 +33,7 @@ This is a command line tool for interacting with the JSS via the command line us
 
 The Casper API CLI has been tested on the following combinations:
 
-- Python 2.7.10 with Mac OS X El Capitan 10.11.4
+- Python 2.7.10 with Mac OS X El Capitan 10.11.6
 - Python 2.7.5 with Mac OS X Mavericks 10.9.5
 
 It also leverages specific Python libraries.
@@ -109,7 +109,7 @@ Your Mac should probably have these Python libraries already. However, upon runn
 
   You will then be prompted to enter information to connect to the JSS.
 
-  - The JSS URL, without https://, e.g. `yourjss.jamfcloud.com`
+  - The JSS URL, without https://, e.g. `yourjss.jamfcloud.com` or if locally hosted `yourjss.yourorgdomain.com:8443` (or whatever port is being used)
   - Your JSS username
   - Your JSS password
   - The path to a location different than the location where you've set up the CasperAPI_CLI script to store your encryption keys. We set this up above as `/Volumes/Keys`
@@ -118,7 +118,7 @@ Your Mac should probably have these Python libraries already. However, upon runn
 
   ```
   $ python SetupCasperAPI.py
-  Welcome to the Casper CLI setup. Please note that this will overwrite any configuration files you have previously configured.
+  Welcome to the Casper CLI setup. Please note that this will overwrite any configuration files you have previously configured. (Depending on OS X or macOS version, you may have to run this as `sudo`)
 
   Enter JSS URL in the form yourjss.jamfcloud.com: yourjss.jamfcloud.com
   Username: your-jss-username
@@ -325,6 +325,16 @@ All devices in group Jason's Test Group [name, jss_id, serial_no]:
 jason-12344, 123, ABCDEFHIJKLM
 ```
 
+#### Lock Mobile Device
+
+Issues a lock command to a mobile device. Only works on devices that have a lock code enabled.
+
+##### Syntax
+
+```
+casper lockmobiledevice MOBILEDEVICENAME
+```
+
 #### Remove a Computer from a Group
 
 This removes the specified computer from the specified group. If the specified computer or group does not exist or results in multiple matches, it will exit.
@@ -450,6 +460,16 @@ Updates the specified mobile device with an asset tag number
 
 ```
 casper updatemobileassettag MOBILEDEVICE ASSETTAG
+```
+
+#### Update Mobile Device Inventory
+
+Issues an Update Inventory command to the specified mobile device
+
+##### Syntax
+
+```
+casper updatemobiledeviceinventory MOBILEDEVICENAME
 ```
 
 #### Update Mobile Device User Information
