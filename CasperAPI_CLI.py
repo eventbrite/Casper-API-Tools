@@ -380,14 +380,14 @@ def getComputerByID(compID, username, password):
 		managed = remote_management.find('managed').text
 		
 		print '\nGENERAL INFORMATION:'
-		print 'Computer Name: ' + name
+		print 'Computer Name: ' + str(name)
 		print 'Asset Number: ' + str(asset_tag)
-		print 'JSS Computer ID: ' + jssID
-		print 'Serial Number: ' + sn
-		print 'Mac Address: ' + mac_addr 
-		print 'Managed: ' + managed
-		print 'Last Check-In: ' + last_contact_time
-		print 'Last Inventory Update: ' + report_time
+		print 'JSS Computer ID: ' + str(jssID)
+		print 'Serial Number: ' + str(sn)
+		print 'Mac Address: ' + str(mac_addr) 
+		print 'Managed: ' + str(managed)
+		print 'Last Check-In: ' + str(last_contact_time)
+		print 'Last Inventory Update: ' + str(report_time)
 
 		assigned_user = responseXml.find('location/username').text
 		real_name = responseXml.find('location/real_name').text
