@@ -16,14 +16,25 @@ This is a command line tool for interacting with the JSS via the command line us
     - [Delete a Computer by JSS ID](#delete-a-computer-by-jss-id)
     - [Delete Computers by JSS ID using a CSV File](#delete-computers-by-jss-id-using-a-csv-file)
     - [Get a Computer](#get-a-computer)
+    - [Get a Computer by JSS ID](#get-a-computer-by-jss-id)
     - [Get a Computer Group JSS ID](#get-a-computer-group-jss-id)
+    - [Get Computer Group Members](#get-computer-group-members)
+    - [Get a Mobile Device](#get-a-mobile-device)
+    - [Get a Mobile Device by JSS ID](#get-a-mobile-device-by-jss-id)
     - [Get a Mobile Device Group](#get-a-mobile-device-group)
+    - [Get Mobile Devices using a CSV File](#get-mobile-devices-using-a-csv-file)
+    - [Lock Mobile Device](#lock-mobile-device)
+    - [Lock Mobile Devices using a CSV file](#lock-mobile-devices-using-a-csv-file)
     - [Remove a Computer from a Group](#remove-a-computer-from-a-group)
     - [Unmanage a Computer by JSS ID](#unmanage-a-computer-by-jss-id)
     - [Unmanage Computers by JSS ID using a CSV File](#unmanage-computers-by-jss-id-using-a-csv-file)
     - [Update Asset Tag of a Computer using JSS ID](#update-asset-tag-of-a-computer-using-jss-id)
     - [Update Mobile Device Asset Tag](#update-mobile-device-asset-tag)
+    - [Update Mobile Device Asset Tags using a CSV File](#update-mobile-device-asset-tags-using-a-csv-file)
+    - [Update Mobile Device Inventory](#update-mobile-device-inventory)
     - [Update Mobile Device User Information from a CSV File](#update-mobile-device-user-information-from-a-csv-file)
+    - [Wipe Mobile Device](#wipe-mobile-device)
+    - [Wipe Mobile Devices using a CSV File](#wipe-mobile-devices-using-a-csv-file)
 - [Credits](#credits)
 - [License](#license)
 
@@ -33,8 +44,8 @@ This is a command line tool for interacting with the JSS via the command line us
 
 The Casper API CLI has been tested on the following combinations:
 
-- Python 2.7.10 with Mac OS X El Capitan 10.11.6
-- Python 2.7.5 with Mac OS X Mavericks 10.9.5
+- Python 2.7.10 with Mac OS X El Capitan and macOS Sierra
+- Python 2.7.5 with Mac OS X Mavericks
 
 It also leverages specific Python libraries.
 
@@ -249,6 +260,24 @@ casper getcomputer jason -d yes
 
 Returns all computers matching the string `jason` with full detail.
 
+#### Get a Computer by JSS ID
+
+This returns the computer record for the device matching the provided JSS ID. 
+
+##### Syntax
+
+```
+casper getcomputer JSSID
+```
+
+##### Example
+
+```
+casper getcomputerbyid 123
+```
+
+Returns the computer record matching JSS ID 123, with full detail.
+
 #### Get a Computer Group JSS ID
 
 This returns the JSS ID of the computer group specified. If the search results in zero or more than one result, it will exit and display a message informing you.
@@ -257,6 +286,22 @@ This returns the JSS ID of the computer group specified. If the search results i
 
 ```
 casper getcomputergroupid COMPUTERGROUPNAME
+```
+
+#### Get Computer Group Members
+
+This returns all computers in the JSS that are a member of the specified computer group, with the computer name, JSS ID, and Serial number, separated by commas.
+
+##### Syntax
+
+```
+casper getcomputergroupmembers GROUPNAME
+```
+
+##### Example
+
+```
+casper getcomputergroupmembers "Sierra Computers"
 ```
 
 #### Get a Mobile Device
@@ -325,6 +370,24 @@ All devices in group Jason's Test Group [name, jss_id, serial_no]:
 jason-12344, 123, ABCDEFHIJKLM
 ```
 
+#### Get Mobile Devices using a CSV File
+
+This retrieves a list of all the mobile devices specified in a CSV file. The CSV file should be formatted with one header row, followed by as many search strings for mobile devices. 
+
+CSV File Example:
+
+| Search  |
+| ------- |
+| jason   |
+| bob     |
+| jill    |
+
+##### Syntax
+
+```
+casper getmobiledevicescsv /Full/Path/To/csvfile.csv
+```
+
 #### Lock Mobile Device
 
 Issues a lock command to a mobile device. Only works on devices that have a lock code enabled.
@@ -334,6 +397,17 @@ Issues a lock command to a mobile device. Only works on devices that have a lock
 ```
 casper lockmobiledevice MOBILEDEVICENAME
 ```
+
+#### Lock Mobile Devices using a CSV file
+
+Issues lock commands to all mobile devices in a CSV file. Only works on devices that have a lock code enabled.
+
+##### Syntax
+
+```
+casper lockmobiledevicescsv /Full/Path/To/csvfile.csv
+```
+
 
 #### Remove a Computer from a Group
 
@@ -449,7 +523,7 @@ Updates the information associated with a computer record using a CSV file with 
 ##### Syntax
 
 ```
-casper updatecomputeruserinfofromcsv PATHTOCSVFILE/CSVFILE.csv
+casper updatecomputeruserinfofromcsv /Full/Path/To/csvfile.csv
 ```
 
 #### Update Mobile Device Asset Tag
@@ -461,6 +535,25 @@ Updates the specified mobile device with an asset tag number
 ```
 casper updatemobileassettag MOBILEDEVICE ASSETTAG
 ```
+
+#### Update Mobile Device Asset Tags using a CSV File
+
+Updates the specified mobile device with an asset tag number specified in a CSV file. The CSV file should have two columns, the mobile device to search for and the associated asset tag.
+
+CSV File Example:
+
+| Mobile  | Asset Tag |
+| ------- | --------- |
+| jason   | 12345     |
+| bob     | 12346     |
+| jill    | 12347     |
+
+##### Syntax
+
+```
+casper updatemobileassettagscsv /Full/Path/To/csvfile.csv
+```
+
 
 #### Update Mobile Device Inventory
 
@@ -501,7 +594,93 @@ Updates the information associated with a mobile device record using a CSV file 
 ##### Syntax
 
 ```
-casper updatemobiledeviceuserinfofromcsv PATHTOCSVFILE/CSVFILE.csv
+casper updatemobiledeviceuserinfofromcsv /Full/Path/To/csvfile.csv
+```
+
+#### Wipe Mobile Device
+
+Issues a wipe command to a mobile device. It will display the information and ask you to confirm prior to issuing the erase command.
+
+##### Syntax
+
+```
+casper wipemobiledevice MOBILEDEVICENAME
+```
+
+##### Example
+
+```
+casper wipemobiledevice 12345
+```
+
+Output:
+
+```
+Getting mobile device with JSS ID 170...
+
+GENERAL INFORMATION:
+JSS Mobile Device ID: 170
+Mobile Name: C123ABC345
+Model: iPhone 6
+Last Inventory Update: Wednesday, May 03 2017 at 10:29 PM
+Asset Number: 12345
+OS Version: 10.3.1
+Serial Number: C123ABC345
+Mac Address: AB:CD:EF:12:34:56
+IP Address: 192.168.1.57
+Managed: true
+Supervised: true
+
+USER AND LOCATION:
+Username: None
+Real Name: None
+Email: None
+Position: None
+Phone: None
+Department: None
+Building: San Francisco
+Room: None
+
+MOBILE DEVICE GROUPS:
+12: iPhones
+15: iOS Checked In
+2: All Managed iPhones
+
+Are you sure you want to wipe the mobile device listed above? [y/n]:
+```
+
+#### Wipe Mobile Devices using a CSV File
+
+Issues wipe commands to all mobile devices in a CSV file. It will present you with a list of devices to be wiped and ask for confirmation prior to issuing the wipe commands.
+
+CSV File Format:
+
+| Devices |
+| ------- |
+| 12344   |
+| 12345   |
+
+##### Syntax
+
+```
+casper wipemobiledevicescsv /Full/Path/To/csvfile.csv
+```
+
+##### Example
+
+```
+casper wipemobiledevicescsv /Users/jason/Downloads/mobiledevicestowipe.csv
+```
+
+Output:
+
+```
+Device Name Serial Number Asset JSS ID
+=========== ============= ===== ======
+jason-12344  C23MABC5BB8  12344 170
+jason-12345  C23MABC5BB6  12345 171
+
+Are you sure you want to send wipe commands to the above mobile devices? (y/n):
 ```
 
 ## Credits
@@ -511,7 +690,7 @@ Copyright (c) 2015, JAMF Software, LLC. All rights reserved.
 
 ## License
 
-Copyright (c) 2016, Eventbrite.
+Copyright (c) 2016-2017, Eventbrite.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

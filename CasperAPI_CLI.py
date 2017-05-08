@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# Casper API Tools version 0.1.5
+# Casper API Tools version 0.2.0
 
 ##############################################################
 ##############################################################
@@ -1296,7 +1296,7 @@ def getComputerGroupMembers(groupSearch, username, password):
 				comp_id = computer.find('id').text
 				name = computer.find('name').text
 				serial_number = computer.find('serial_number').text
-				print str(comp_id)
+				#print str(comp_id)
 				#computerInfo = str(name)
 				#email_address = getUserEmailByComputerID(comp_id, username, password)
 				computerInfo = str(name) + ', ' + str(comp_id) + ', ' + str(serial_number)
@@ -1758,7 +1758,7 @@ def main():
 	parser_getmobiledevicegroup.set_defaults(cmd='getmobiledevicegroup')
 	parser_getmobiledevicegroup.add_argument('mobilegroupsearch', help='Search string for mobile device group')
 
-	parser_getmobiledevicescsv = subparsers.add_parser('getmobiledevicescsv', help='CSV file containing one column with search strings')
+	parser_getmobiledevicescsv = subparsers.add_parser('getmobiledevicescsv', help='Search for all mobile devices in a CSV file containing one column with search strings')
 	parser_getmobiledevicescsv.set_defaults(cmd='getmobiledevicescsv')
 	parser_getmobiledevicescsv.add_argument('csvfile', help='Full path to CSV file with one column containing mobile device search strings')
 
