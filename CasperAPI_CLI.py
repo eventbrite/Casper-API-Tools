@@ -7,7 +7,7 @@
 # Casper API Tools Command Line Inteface
 # https://github.com/eventbrite/Casper-API-Tools
 # Original Script created by: Jason Kuo
-# Updated 05/05/2017
+# Updated 05/08/2017
 #
 ##############################################################
 ##############################################################

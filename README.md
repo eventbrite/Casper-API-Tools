@@ -44,8 +44,8 @@ This is a command line tool for interacting with the JSS via the command line us
 
 The Casper API CLI has been tested on the following combinations:
 
-- Python 2.7.10 with Mac OS X El Capitan and macOS Sierra
-- Python 2.7.5 with Mac OS X Mavericks
+- Python 2.7.10 with Mac OS X El Capitan and macOS Sierra.
+- Python 2.7.5 with Mac OS X Mavericks.
 
 It also leverages specific Python libraries.
 
