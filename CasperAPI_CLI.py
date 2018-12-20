@@ -33,6 +33,21 @@ from xml.dom import minidom
 
 import subprocess
 
+# policy class object for use in policy methods
+class Policy:
+    def __init__(self, name, status, scope, packages):
+        # self.policyid = policyid
+        self.name = name
+        self.status = status
+        self.scope = scope
+        self.packages = packages
+
+    def __repr__(self):
+        return "Policy {} status is enabled = {}".format(self.name, self.status)
+
+
+
+
 # prettify function from https://pymotw.com/2/xml/etree/ElementTree/create.html
 def prettify(elem):
     """Return a pretty-printed XML string for the Element.
@@ -49,7 +64,7 @@ def getJSS_API_URL():
 	jss_api_url_Location = scriptPath + '/.jssURL'
 
 	if os.path.isfile(jss_api_url_Location):
-		
+
 		with open (jss_api_url_Location) as jssURLfile:
 			jssURL = jssURLfile.read().replace('\n','')
 			jss_api_url = jssURL + '/JSSResource'
@@ -66,7 +81,7 @@ def getKeysFile():
 	keysFile = scriptPath + '/.keysfile'
 
 	if os.path.isfile(keysFile):
-		
+
 		with open (keysFile) as keyLocationFile:
 			keysfileLoc = keyLocationFile.read().replace('\n','')
 			return keysfileLoc
@@ -118,7 +133,7 @@ def sendAPIRequest(reqStr, username, password, method, XML=''):
 		request.add_header('Content-Type', 'text/xml')
 		request.get_method = lambda: 'PUT'
 		try:
-			response = urllib2.urlopen(request, XML)	
+			response = urllib2.urlopen(request, XML)
 			return response
 		except urllib2.HTTPError, e:
 			print 'Request failed with error code - %s.' % e.code
@@ -173,7 +188,7 @@ def getJSSpw():
 
 	if os.path.isfile(apikeyLocation):
 		#print "api key file exists, here's the key!"
-		
+
 		#print "Path: " + os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
 		with open (apikeyLocation) as apikeyfile:
@@ -228,12 +243,12 @@ def getEncryptedJSSpw():
 
 	if os.path.isfile(encryptedPWLocation):
 		#print "api key file exists, here's the key!"
-		
+
 		#print "Path: " + os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
 		with open (encryptedPWLocation) as encryptedPWfile:
 			encryptedPW = encryptedPWfile.read().replace('\n','')
-	
+
 		decryptedPW = decryptString(encryptedPW, salt, passphrase)
 		return decryptedPW
 
@@ -310,7 +325,7 @@ def getComputer(computerName, username, password, detail):
 		mac_addr = computer.find('mac_address').text
 		jssID = computer.find('id').text
 		#fv2status = computer.find('filevault2_status').text
-		
+
 		#print 'FileVault2 Status: ' + fv2status + '\n'
 
 		if detail == 'yes':
@@ -390,13 +405,13 @@ def getComputerByID(compID, username, password):
 		report_time = responseXml.find('general/report_date').text
 		remote_management = general.find('remote_management')
 		managed = remote_management.find('managed').text
-		
+
 		print '\nGENERAL INFORMATION:'
 		print 'Computer Name: ' + str(name)
 		print 'Asset Number: ' + str(asset_tag)
 		print 'JSS Computer ID: ' + str(jssID)
 		print 'Serial Number: ' + str(sn)
-		print 'Mac Address: ' + str(mac_addr) 
+		print 'Mac Address: ' + str(mac_addr)
 		print 'Managed: ' + str(managed)
 		print 'Last Check-In: ' + str(last_contact_time)
 		print 'Last Inventory Update: ' + str(report_time)
@@ -472,7 +487,7 @@ def getComputerByID(compID, username, password):
 		print '\nGROUPS: '
 		print '\n'.join (sorted (groups))
 
-		
+
 		local_accounts = groups_accounts.find('local_accounts')
 		localusers = []
 		for user in local_accounts.findall('user'):
@@ -636,7 +651,7 @@ def getMobileDeviceByID(mobileID, username, password):
 		responseXml = etree.fromstring(baseXml)
 
 		#print responseXml.tag
-		
+
 		general = responseXml.find('general')
 		jssID = general.find('id').text
 		name = general.find('name').text
@@ -649,7 +664,7 @@ def getMobileDeviceByID(mobileID, username, password):
 		ip_addr = general.find('ip_address').text
 		managed = general.find('managed').text
 		supervised = general.find('supervised').text
-		
+
 		print '\nGENERAL INFORMATION:'
 		print 'JSS Mobile Device ID: ' + jssID
 		print 'Mobile Name: ' + name
@@ -658,11 +673,11 @@ def getMobileDeviceByID(mobileID, username, password):
 		print 'Asset Number: ' + str(asset_tag)
 		print 'OS Version: ' + os_version
 		print 'Serial Number: ' + sn
-		print 'Mac Address: ' + mac_addr 
+		print 'Mac Address: ' + mac_addr
 		print 'IP Address: ' + ip_addr
 		print 'Managed: ' + managed
 		print 'Supervised: ' + supervised
-		
+
 
 		assigned_user = responseXml.find('location/username').text
 		real_name = responseXml.find('location/real_name').text
@@ -816,7 +831,7 @@ def removeMobileDeviceFromGroup(mobile_device, mobile_device_group, username, pa
 	else:
 		print 'Successfully remove mobile device ' + mobile_device + ' to group ' + mobile_device_group + '.'
 
-## Find Mobile Device using search string using name, serial number, asset tag, etc. 
+## Find Mobile Device using search string using name, serial number, asset tag, etc.
 ## Name, mac address, etc. to filter by. Match uses the same format as the general search in the JSS. For instance, admin* can be used to match mobile device names that begin with admin
 
 def findMobileDeviceId(searchString, username, password):
@@ -1050,7 +1065,7 @@ def wipeMobileDevicesCSV(devicesCSV, username, password):
 		print 'No devices found to wipe, aborting...'
 		return -1
 	## Print confirmation message
-	
+
 	print '\nDevice Name\tSerial Number\tAsset\tJSS ID'
 	print '===========\t=============\t=====\t======'
 	for (device, info) in devicesDict.items():
@@ -1167,7 +1182,7 @@ def updateMobileDeviceName(mobileSearch, deviceName, username, password):
 		print 'Device found, but is not supervised.'
 
 	postStr = jss_api_base_url + '/mobiledevicecommands/command/DeviceName/' + newDeviceName_normalized + '/id/' + mobile_id
-	postXML = "<mobile_device_command><command>DeviceName</command><mobile_devices><mobile_device><id>" + mobile_id + "</id><device_name>" + deviceName + "</device_name></mobile_device></mobile_devices></mobile_device_command>" 
+	postXML = "<mobile_device_command><command>DeviceName</command><mobile_devices><mobile_device><id>" + mobile_id + "</id><device_name>" + deviceName + "</device_name></mobile_device></mobile_devices></mobile_device_command>"
 
 def lockMobileDevice(mobileSearch, username, password):
 	print 'Searching for mobile device ' + mobileSearch + '...'
@@ -1203,7 +1218,7 @@ def lockMobileDevice(mobileSearch, username, password):
 		print 'Aborting request to lock mobile device...'
 		return -1
 
-	
+
 
 
 ## GROUPS
@@ -1272,7 +1287,7 @@ def getComputerGroupMembers(groupSearch, username, password):
 
 	reqStr = jss_api_base_url + '/computergroups/id/' + str(computer_group_id)
 
-	try: 
+	try:
 		r = sendAPIRequest(reqStr, username, password, 'GET')
 		#responseCode = str(r.code)
 
@@ -1306,7 +1321,7 @@ def getComputerGroupMembers(groupSearch, username, password):
 
 			print '\n'.join (sorted(members))
 			print 'Total Computers: ' + str(len(members)-1)
-				
+
 		elif '401' in str(responseCode):
 			print "Authorization failed"
 	except urllib2.HTTPError, err:
@@ -1322,7 +1337,7 @@ def getSerialNumber():
 
 def unmanageComputer(comp_id, username, password):
 	print "Unmanaging computer " + comp_id + "..."
-	
+
 	#reqStr = jss_api_base_url + '/computercommands/command/UnmanageDevice'
 	#print reqStr
 
@@ -1341,8 +1356,8 @@ def unmanageComputer(comp_id, username, password):
 		#print 'Response Code: ' + responseCode
 		if responseCode == '201':
 			print 'Successfully unmanaged computer ID ' + comp_id + '...'
-			
-		
+
+
 		## Uncomment this part to see the xml response
 		#xmlstring = response.read()
 		#xml = etree.fromstring(xmlstring)
@@ -1364,8 +1379,8 @@ def updateAssetTag(comp_id, asset_tag, username, password):
 		print 'Successfully updated asset tag for computer ' + comp_id + '.'
 
 def updateComputerUserInfo(comp_id, username, real_name, email_address, position, phone, department, building, room, overwrite, jssuser, jsspassword):
-	
-	
+
+
 	putStr = jss_api_base_url + '/computers/id/' + comp_id
 	if overwrite == 'y':
 		print 'Overwriting all existing user and location info for computer ID ' + comp_id + ' with the following:\n' + '\n  Username: ' + username + '\n  Full Name: ' + real_name + '\n  Email: ' + email_address + '\n  Position: ' + position + '\n  Phone: ' + str(phone) + '\n  Department: ' + department + '\n  Building: ' + building + '\n  Room: ' + room + '\n'
@@ -1434,8 +1449,8 @@ def updateComputerUserInfo(comp_id, username, real_name, email_address, position
 		print 'Successfully updated user and location info for computer ' + comp_id + '.'
 
 def updateMobileDeviceUserInfo(mobile_id, username, real_name, email_address, position, phone, department, building, room, overwrite, jssuser, jsspassword):
-	
-	
+
+
 	putStr = jss_api_base_url + '/mobiledevices/id/' + mobile_id
 	if overwrite == 'y':
 		print 'Overwriting all existing user and location info for mobile device ID ' + mobile_id + ' with the following:\n' + '\n  Username: ' + username + '\n  Full Name: ' + real_name + '\n  Email: ' + email_address + '\n  Position: ' + position + '\n  Phone: ' + str(phone) + '\n  Department: ' + department + '\n  Building: ' + building + '\n  Room: ' + room + '\n'
@@ -1571,12 +1586,12 @@ def unmanageComputerIDsFromCSV(computersCSV, username, password):
 			unmanageComputer(compID, username, password)
 
 def deleteComputerByID(comp_id, username, password):
-	
+
 	getComputerByID(comp_id, username, password)
 
 	sure = raw_input('Are you sure you want to delete the computer above from the JSS? (y/n): ')
 
-	if sure == 'y':	
+	if sure == 'y':
 		print "Deleting computer " + comp_id + "..."
 
 		delStr = jss_api_base_url + '/computers/id/' + comp_id
@@ -1615,6 +1630,340 @@ def deleteComputerIDsFromCSV(computersCSV, username, password):
 			deleteComputerByID(compID, username, password)
 
 
+### Policy Functions ###
+
+def getAllPolicies(username, password):
+    ''' List all policies in JSS to screen '''
+
+    print "Getting All JAMF Policies..."
+    reqStr = jss_api_base_url + '/policies'
+
+    r = sendAPIRequest(reqStr, username, password, 'GET')
+
+    if r == -1:
+        return
+
+    baseXml = r.read()
+    responseXml = etree.fromstring(baseXml)
+
+    for policy in responseXml.findall('policy'):
+        policyName = policy.find('name').text
+        policyID = policy.find('id').text
+
+        print 'Policy ID: ' + policyID + ',  ' + 'Policy Name: ' + policyName + '\n'
+
+
+def listAllPolicies(username, password):
+    ''' List all policies in JSS - for function use  '''
+
+    reqStr = jss_api_base_url + '/policies'
+
+    r = sendAPIRequest(reqStr, username, password, 'GET')
+
+    if r == -1:
+        return
+
+    baseXml = r.read()
+    responseXml = etree.fromstring(baseXml)
+    PoliciesList = []
+    for policy in responseXml.findall('policy'):
+        policyName = policy.find('name').text
+        policyID = policy.find('id').text
+        PoliciesList.append({'name': policyName, 'id': policyID})
+
+    return PoliciesList
+
+
+
+def listAllPolicyIds(username, password):
+    ''' List all policy IDs in JSS - for function use - returns a list of Policy ID #s  '''
+
+    reqStr = jss_api_base_url + '/policies'
+
+    r = sendAPIRequest(reqStr, username, password, 'GET')
+
+    if r == -1:
+        return
+
+    baseXml = r.read()
+    responseXml = etree.fromstring(baseXml)
+    PolicyIDList = []
+    for policy in responseXml.findall('policy'):
+        policyID = policy.find('id').text
+        PolicyIDList.append(policyID)
+
+    return PolicyIDList
+
+
+
+def listPolicyStatusbyId(policyid, username, password):
+    ''' Function to search for Policy ID by ID number and return status results for
+    use in functions '''
+
+
+    reqStr = jss_api_base_url + '/policies/id/' + policyid + '/subset/General'
+
+    r = sendAPIRequest(reqStr, username, password, 'GET')
+
+    if r != -1:
+
+        baseXml = r.read()
+        responseXml = etree.fromstring(baseXml)
+        general = responseXml.find('general')
+        status = general.find('enabled').text
+
+    return status
+
+
+
+def listPolicyNamebyId(policyid, username, password):
+    ''' Function to search for Policy ID by ID number and return name for
+    use in functions '''
+
+    reqStr = jss_api_base_url + '/policies/id/' + policyid + '/subset/General'
+
+    r = sendAPIRequest(reqStr, username, password, 'GET')
+
+    if r != -1:
+
+        baseXml = r.read()
+        responseXml = etree.fromstring(baseXml)
+        general = responseXml.find('general')
+        name = general.find('name').text
+
+    return name
+
+
+def listPolicyScopebyId(policyid, username, password):
+    ''' Function to search for Policy ID by ID number and return scope details as a
+    dict for use in functions '''
+
+    reqStr = jss_api_base_url + '/policies/id/' + policyid + '/subset/Scope'
+
+    r = sendAPIRequest(reqStr, username, password, 'GET')
+
+    scopeData = []
+
+    if r != -1:
+
+        baseXml = r.read()
+        responseXml = etree.fromstring(baseXml)
+        scope = responseXml.find('scope')
+        allcomputers = scope.find('all_computers').text
+        groups = scope.find('computer_groups')
+        comp_groups = []
+        computers = scope.find('computers')
+        members = []
+        scope_details = {}
+
+        for comp in computers.findall('computer'):
+            if comp.find('name').text:
+                name = comp.find('name').text
+                members.append(name)
+
+        for g in groups.findall('computer_group'):
+            if g.find('name').text:
+                group_name = g.find('name').text
+                comp_groups.append(group_name)
+
+        scope_details = { "All computers?: ": allcomputers, "Computer groups: ": comp_groups, "Specific computers: ": members }
+
+    return scope_details
+
+
+def listPolicyPackagesbyId(policyid, username, password):
+    ''' Function to search for Policy ID by ID number and return package details as a list
+    for use in functions '''
+
+    reqStr = jss_api_base_url + '/policies/id/' + policyid + '/subset/Packages'
+
+    r = sendAPIRequest(reqStr, username, password, 'GET')
+
+    pkglist = []
+
+    if r != -1:
+
+        baseXml = r.read()
+        responseXml = etree.fromstring(baseXml)
+        pkgconfig = responseXml.find('package_configuration')
+        packages = pkgconfig.find('packages')
+
+        if packages.findall('package'):
+            for pkg in packages.findall('package'):
+                pkg_name = pkg.find('name').text
+                pkglist.append(pkg_name)
+
+
+    return pkglist
+
+
+
+def getPolicybyId(policyid, username, password):
+    ''' Method to search for Policy ID by ID number and return General Policy Information, Scoping Information, and Package Configuration information - send results to Stdout '''
+
+    reqStr = jss_api_base_url + '/policies/id/' + policyid
+
+    r = sendAPIRequest(reqStr, username, password, 'GET')
+
+    if r != -1:
+
+        baseXml = r.read()
+        responseXml = etree.fromstring(baseXml)
+
+        general = responseXml.find('general')
+
+        ## General Policy Information
+        name = general.find('name').text
+        policy_id = general.find('id').text
+        enabled = general.find('enabled').text
+        trigger = general.find('trigger').text
+        frequency = general.find('frequency').text
+
+        print '\nGENERAL POLICY INFORMATION: '
+        print 'Policy Name: ' + str(name)
+        print 'Policy ID #: ' + str(policy_id)
+        print 'Policy is Enabled: ' + str(enabled)
+        print 'Policy Trigger: ' + str(trigger)
+        print 'Policy Frequency: ' + str(frequency)
+
+        ## Policy Scope Information
+        scope = responseXml.find('scope')
+        allcomputers = scope.find('all_computers').text
+        groups = scope.find('computer_groups')
+        comp_groups = []
+        computers = scope.find('computers')
+        members = []
+
+        ## Add Header Row for output for info categories
+        # headerRow = "Computer Name, JSS ID"
+        # members += [ headerRow ]
+
+        for computer in computers.findall('computer'):
+            # compID = computer.find('id').text
+            name = computer.find('name').text
+            computerInfo = str(name)
+            computerInfo = cleanupOutput(computerInfo)
+            #print computerInfo.encode('ascii', 'ignore')
+            members += [ computerInfo ]
+
+        for g in groups.findall('computer_group'):
+            group_name = g.find('name').text
+            groupInfo = str(group_name)
+            comp_groups += [ groupInfo ]
+
+
+        print '\nPOLICY SCOPE INFORMATION:'
+        print 'Scoped to All Computers: ' + str(allcomputers)
+        print '\nCOMPUTER GROUPS IN SCOPE: '
+        print '\n'.join (sorted(comp_groups))
+
+        if members:
+            print '\nADDITIONAL COMPUTERS IN SCOPE: '
+            print '\n'.join (sorted(members))
+            print '\nTotal Computers in Scope: ' + str(len(members))
+
+        ## Package Configuration Information
+        pkgconfig = responseXml.find('package_configuration')
+        packages = pkgconfig.find('packages')
+        pkgheaderRow = "Package Name"
+        pkglist = []
+
+        for pkg in packages.findall('package'):
+            pkg_name = pkg.find('name').text
+            pkg_action = pkg.find('action').text
+            pkgInfo = str(pkg_name) + ', ' + str(pkg_action)
+            pkgInfo = cleanupOutput(pkgInfo)
+            pkglist += [ pkgInfo ]
+
+
+        print '\nPACKAGE CONFIGURATION: '
+        print '\n'.join (sorted(pkglist))
+
+    else:
+        print 'Failed to find policy with ID ' + policyid
+
+
+def getEnabledPolicies(username, password):
+    ''' Function to get all policies and filter out only currently enabled policies '''
+
+    ## List for holding all policies / Empty list for results
+    AllPolicies = listAllPolicies(username, password)
+    EnabledPolicies = []
+
+    print '\nAbout to find all Enabled policies.  This may take some time...\n\n'
+
+    print 'There are a total of {} policies...\n'.format(len(AllPolicies))
+
+    ## iterate over AllPolicies dict, instantiate Policy object with id value,
+    ## add to "EnabledPolicies" list if status ('enabled') evaluates true
+    for dictItem in AllPolicies:
+        for k,v in dictItem.items():
+            if k == "id":
+                newPolObj = Policy(listPolicyNamebyId(v, username, password), listPolicyStatusbyId(v, username, password), listPolicyScopebyId(v, username, password))
+                print 'Evaluating status: {}'.format(newPolObj.name) + '...status Enabled = {}'.format(newPolObj.status)
+
+                if newPolObj.status == 'true':
+                    EnabledPolicies.append(newPolObj.name)
+
+    print '\nTotal policies in JSS:  {}'.format(len(AllPolicies))
+    print '\nTotal enabled policies:  {}'.format(len(EnabledPolicies))
+
+    print '\nThe following policies are currently enabled: \n'
+
+    for pol in EnabledPolicies:
+        print pol.name
+
+
+
+
+def getEnabledPoliciestoCSV(username, password):
+    ''' get Enabled Policies and export to CSV, along with scope and package info '''
+
+    ## List for holding all policies / Empty list for results
+    AllPolicies = listAllPolicies(username, password)
+    EnabledPolicies = []
+
+    csvOutPutFile = raw_input("\nEnter the full path for desired CSV:  ")
+
+    print '\nAbout to find all Enabled policies.  Grab a coffee.  This may take some time...\n\n'
+
+    ## iterate over AllPolicies dict, instantiate Policy object with id value,
+    ## add to "EnabledPolicies" list if status ('enabled') evaluates true
+
+    with open(csvOutPutFile, "a") as file:
+        headers = ["Policy Name", "Policy Enabled", "All Computers Scoped?", "Specific Computers Scoped", "Computer Groups Scoped", "Policy Packages"]
+        csv_writer = DictWriter(file, fieldnames=headers)
+        csv_writer.writeheader()
+
+        for dictItem in AllPolicies:
+            for k,v in dictItem.items():
+                if k == "id":
+                    newPolObj = Policy(listPolicyNamebyId(v, username, password), listPolicyStatusbyId(v, username, password),      listPolicyScopebyId(v, username, password), listPolicyPackagesbyId(v, username, password))
+
+                    if newPolObj.status == 'true':
+                        print 'Exporting info for Policy: {}'.format(newPolObj.name)
+                        ## format dict and list items as strings for better viewing in CSV
+                        pkgstr = ', '.join(newPolObj.packages)
+                        compstr = ', '.join(newPolObj.scope["Specific computers: "])
+                        grpstr = ', '.join(newPolObj.scope["Computer groups: "])
+                        EnabledPolicies.append(newPolObj.name)
+                        csv_writer.writerow({
+                            "Policy Name": newPolObj.name,
+                            "Policy Enabled": newPolObj.status,
+                            "All Computers Scoped?": newPolObj.scope["All computers?: "],
+                            "Specific Computers Scoped": compstr,
+                            "Computer Groups Scoped": grpstr,
+                            "Policy Packages": pkgstr
+                            })
+
+    ## Display all policies that were processed
+    print '\nThe following policies are enabled and were successfully exported:  \n'
+    print EnabledPolicies
+
+    print '\nResults are now available in ' + csvOutPutFile + '\n'
+
+
+
 def getComputerCommands(username, password):
 	print "Getting computer commands..."
 	reqStr = jss_api_base_url + '/computercommands'
@@ -1641,7 +1990,7 @@ def getJSSUsername():
 
 	if os.path.isfile(jssusernameLocation):
 		#print "api key file exists, here's the key!"
-		
+
 		#print "Path: " + os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
 		with open (jssusernameLocation) as jssusernamefile:
@@ -1666,7 +2015,7 @@ def getJSSPassword():
 
 	if os.path.isfile(jsspasswordLocation):
 		#print "api key file exists, here's the key!"
-		
+
 		#print "Path: " + os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
 		with open (jsspasswordLocation) as jsspasswordfile:
@@ -1722,11 +2071,11 @@ def main():
 	parser_deletecomputerbyid = subparsers.add_parser('deletecomputerbyid', help='Delete computer by JSS ID')
 	parser_deletecomputerbyid.set_defaults(cmd='deletecomputerbyid')
 	parser_deletecomputerbyid.add_argument('computerID', help=unmanageComputerHelp)
-	
+
 	parser_deletecomputeridsfromcsv = subparsers.add_parser('deletecomputeridsfromcsv', help='Delete computers from JSS IDs in CSV file')
 	parser_deletecomputeridsfromcsv.set_defaults(cmd='deletecomputeridsfromcsv')
 	parser_deletecomputeridsfromcsv.add_argument('csvfile', help='Full path to CSV file with one column containing JSS computer IDs to delete')
-	
+
 	parser_findmobiledeviceid = subparsers.add_parser('findmobiledeviceid', help='Find mobile device JSS ID using search string')
 	parser_findmobiledeviceid.set_defaults(cmd='findmobiledeviceid')
 	parser_findmobiledeviceid.add_argument('searchString', help='String to search for, followed by * for wildcard')
@@ -1761,6 +2110,19 @@ def main():
 	parser_getmobiledevicescsv = subparsers.add_parser('getmobiledevicescsv', help='Search for all mobile devices in a CSV file containing one column with search strings')
 	parser_getmobiledevicescsv.set_defaults(cmd='getmobiledevicescsv')
 	parser_getmobiledevicescsv.add_argument('csvfile', help='Full path to CSV file with one column containing mobile device search strings')
+
+    parser_getallpolicies = subparsers.add_parser('getallpolicies', help='Get all policies in JSS')
+    parser_getallpolicies.set_defaults(cmd='getallpolicies', help='Search string for policies')
+
+    parser_getpolicybyid = subparsers.add_parser('getpolicybyid', help='Find specific policy information by JSS ID')
+    parser_getpolicybyid.set_defaults(cmd='getpolicybyid')
+    parser_getpolicybyid.add_argument('policyid', help='ID number for the JSS Policy.  If uncertain, run getallpolicies to see entire list')
+
+    parser_getenabledpolicies = subparsers.add_parser('getenabledpolicies', help='Get all currently enabled policies')
+    parser_getenabledpolicies.set_defaults(cmd='getenabledpolicies')
+
+    parser_getenabledpoliciestocsv = subparsers.add_parser('getenabledpoliciestocsv', help='Get all currently enabled policy names exported to CSV')
+    parser_getenabledpoliciestocsv.set_defaults(cmd='getenabledpoliciestocsv')
 
 	parser_lockmobiledevice = subparsers.add_parser('lockmobiledevice', help='Lock a single mobile device')
 	parser_lockmobiledevice.set_defaults(cmd='lockmobiledevice')
@@ -1881,7 +2243,7 @@ def main():
 	elif APIcommand == 'addmobiledevicetogroup':
 		mobileSearch = args.mobileSearch
 		mobileGroupSearch = args.mobileGroupSearch
-		addMobileDeviceToGroup(mobileSearch, mobileGroupSearch, user, password) 
+		addMobileDeviceToGroup(mobileSearch, mobileGroupSearch, user, password)
 	elif APIcommand == 'clearmobiledevicepasscode':
 		mobileSearch = args.mobileSearch
 		clearMobileDevicePasscode(mobileSearch, user, password)
@@ -1920,6 +2282,15 @@ def main():
 	elif APIcommand == 'getmobiledevicescsv':
 		mobileDevicesCSV = args.csvfile
 		printMobileDevicesCSV(mobileDevicesCSV, user, password)
+    elif APIcommand == 'getallpolicies':
+        getAllPolicies(user, password)
+    elif APIcommand == 'getpolicybyid':
+        policyid = args.policyid
+        getPolicybyId(policyid, user, password)
+    elif APIcommand == 'getenabledpolicies':
+        getEnabledPolicies(user, password)
+    elif APIcommand == 'getenabledpoliciestocsv':
+        getEnabledPoliciestoCSV(user, password)
 	elif APIcommand == 'lockmobiledevice':
 		mobileSearch = args.mobileSearch
 		lockMobileDevice(mobileSearch, user, password)
