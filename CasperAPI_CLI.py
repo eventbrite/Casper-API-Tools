@@ -34,6 +34,8 @@ from xml.dom import minidom
 
 import subprocess
 
+from policies import policies_core
+
 # policy class object for use in policy methods
 # class Policy:
 #     def __init__(self, name, status, scope, packages):
@@ -2445,7 +2447,7 @@ def main():
     elif APIcommand == 'getallcomputergroups':
         getAllComputerGroups(user, password)
     elif APIcommand == 'getallpolicies':
-        getAllPolicies(user, password)
+        policies_core.getAllPolicies(user, password)
     elif APIcommand == 'getpolicybyid':
         policyid = args.policyid
         getPolicybyId(policyid, user, password)
