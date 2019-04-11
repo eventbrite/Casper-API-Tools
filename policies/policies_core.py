@@ -5,7 +5,7 @@ from utilities import apirequests
 import xml.etree.ElementTree as etree
 
 jss_api_base_url = jamfconfig.getJSS_API_URL()
-print("JSS API Base URL: {}".format(jss_api_base_url))
+#print("JSS API Base URL: {}".format(jss_api_base_url))
 
 def getAllPolicies(username, password):
 	''' List all policies in JSS to screen '''
