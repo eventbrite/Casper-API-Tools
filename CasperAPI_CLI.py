@@ -2234,6 +2234,10 @@ def main():
 	parser_deletecomputeridsfromcsv.set_defaults(cmd='deletecomputeridsfromcsv')
 	parser_deletecomputeridsfromcsv.add_argument('csvfile', help='Full path to CSV file with one column containing JSS computer IDs to delete')
 
+	parser_deletemobiledevicebyid = subparsers.add_parser('deletemobiledevicebyid', help='Delete mobile device by JSS ID')
+	parser_deletemobiledevicebyid.set_defaults(cmd='deletemobiledevicebyid')
+	parser_deletemobiledevicebyid.add_argument('mobiledeviceID', help='Delete mobile device by id')
+
 	parser_findmobiledeviceid = subparsers.add_parser('findmobiledeviceid', help='Find mobile device JSS ID using search string')
 	parser_findmobiledeviceid.set_defaults(cmd='findmobiledeviceid')
 	parser_findmobiledeviceid.add_argument('searchString', help='String to search for, followed by * for wildcard')
@@ -2418,6 +2422,9 @@ def main():
 	elif APIcommand == 'deletecomputeridsfromcsv':
 		computersCSV = args.csvfile
 		deleteComputerIDsFromCSV(computersCSV, user, password)
+	elif APIcommand == 'deletemobiledevicebyid':
+		mobiledeviceID = args.mobiledeviceID
+		mobiledevice_lifecycle.deleteMobileDeviceByID(mobiledeviceID, user, password)
 	elif APIcommand == 'findmobiledeviceid':
 		searchString = args.searchString
 		findMobileDeviceId(searchString, user, password)
