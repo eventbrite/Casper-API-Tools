@@ -36,6 +36,8 @@ import subprocess
 
 from policies import policies_core
 from computers import computer_core
+from mobiledevices import mobiledevice_core
+from mobiledevices import mobiledevice_lifecycle
 
 # policy class object for use in policy methods
 # class Policy:
@@ -2435,10 +2437,10 @@ def main():
 	elif APIcommand == 'getmobiledevice':
 		mobilesearch = args.mobilesearch
 		detail = args.detail
-		getMobileDevice(mobilesearch, user, password, detail)
+		mobiledevice_core.getMobileDevice(mobilesearch, user, password, detail)
 	elif APIcommand == 'getmobiledevicebyid':
 		mobileDeviceID = args.mobileDeviceID
-		getMobileDeviceByID(mobileDeviceID, user, password)
+		mobiledevice_core.getMobileDeviceByID(mobileDeviceID, user, password)
 	elif APIcommand == 'getmobiledevicegroup':
 		mobileDeviceGroup = args.mobilegroupsearch
 		getMobileDeviceGroup(mobileDeviceGroup, user, password)
