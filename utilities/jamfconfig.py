@@ -8,9 +8,9 @@ basePath = newpath[0]
 
 def getJSS_API_URL():
 	#scriptPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-	print("Script Path: {}".format(basePath))
+	#print("Script Path: {}".format(basePath))
 	jss_api_url_Location = basePath + '/.jssURL'
-	print("jss api url location: {}".format(jss_api_url_Location))
+	#print("jss api url location: {}".format(jss_api_url_Location))
 
 	if os.path.isfile(jss_api_url_Location):
 

@@ -39,6 +39,8 @@ from computers import computer_core
 from mobiledevices import mobiledevice_core
 from mobiledevices import mobiledevice_lifecycle
 
+__version__ = '0.3.0'
+
 # policy class object for use in policy methods
 # class Policy:
 #     def __init__(self, name, status, scope, packages):
@@ -2206,6 +2208,7 @@ def main():
 
 	parser = argparse.ArgumentParser(description='Interact with the Casper JSS API')
 	subparsers = parser.add_subparsers(help='Enter command with -h for help on each particular command')
+	parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__)
 	'''
 	parser_config = subparsers.add_parser('config', help='Casper CLI Configuration options')
 	parser_config.set_defaults(which='config')
