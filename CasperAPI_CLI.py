@@ -37,26 +37,13 @@ import subprocess
 ## Import locally created libraries
 
 from policies import policies_core
+from policies import policies_extended
 from computers import computer_core
+from computergroups import computergroups
 from mobiledevices import mobiledevice_core
 from mobiledevices import mobiledevice_lifecycle
 
 __version__ = '0.3.0'
-
-# policy class object for use in policy methods
-# class Policy:
-#     def __init__(self, name, status, scope, packages):
-#         # self.policyid = policyid
-#         self.name = name
-#         self.status = status
-#         self.scope = scope
-#         self.packages = packages
-
-#     def __repr__(self):
-#         return "Policy {} status is enabled = {}".format(self.name, self.status)
-
-
-
 
 # prettify function from https://pymotw.com/2/xml/etree/ElementTree/create.html
 def prettify(elem):
@@ -1207,115 +1194,6 @@ def lockMobileDevice(mobileSearch, username, password):
 		return -1
 
 
-
-
-## GROUPS
-
-def GetAllComputerGroups(resource, username, password):
-	reqStr = jss_api_base_url + '/computergroups'
-
-	try:
-		response = sendAPIRequest(reqStr, username, password, 'GET')
-		xmlstring = response.read()
-		print str(xmlstring)
-
-		responseCode = str(response.code)
-		print responseCode
-		#print response.read()
-
-		if '200' in str(responseCode):
-			print "Successful API call, printing XML results"
-			xml = etree.fromstring(xmlstring)
-			#print xml.tag
-			#print xml.attrib
-
-			#print etree.tostring(xml)
-
-			print prettify(xml)
-
-			for computer_group in xml.findall('computer_group'):
-				name = computer_group.find('name').text
-				groupId = computer_group.find('id').text
-				is_smart = computer_group.find('is_smart').text
-				print name + ' [id: ' + groupId + ', smart: ' + is_smart + ']'
-		elif '401' in str(responseCode):
-			print "Authorization failed"
-	except urllib2.HTTPError, err:
-		if '401' in str(err):
-			print 'Authorization failed, goodbye.'
-
-def getComputerGroupId(groupSearch, username, password):
-	groupSearch_normalized = urllib2.quote(groupSearch)
-
-	reqStr = jss_api_base_url + '/computergroups/name/' + groupSearch_normalized
-
-	r = sendAPIRequest(reqStr, username, password, 'GET')
-
-	if r != -1:
-		responseCode = r.code
-		#print 'Response Code: ' + str(responseCode)
-
-		baseXml = r.read()
-		responseXml = etree.fromstring(baseXml)
-
-		computerGroupId = responseXml.find('id').text
-		#print computerGroupId
-		return computerGroupId
-	else:
-		#print 'Group not found.'
-		return -1
-
-def getComputerGroupMembers(groupSearch, username, password):
-	print 'Printing CSV of all members of the group matching ' + groupSearch + '...'
-	# Find computer group JSS ID
-	computer_group_id = getComputerGroupId(groupSearch, username, password)
-	if str(computer_group_id) == '-1':
-		print 'Computer group ' + groupSearch + ' not found, please try again.'
-		return
-
-	reqStr = jss_api_base_url + '/computergroups/id/' + str(computer_group_id)
-
-	try:
-		r = sendAPIRequest(reqStr, username, password, 'GET')
-		#responseCode = str(r.code)
-
-		#if '200' in str(responseCode):
-		if r != -1:
-			xmlstring = r.read()
-			#print str(xmlstring)
-
-			xml = etree.fromstring(xmlstring)
-			#print prettify(xml)
-
-			computers = xml.find('computers')
-			members = []
-
-			## Add Header Row for CSV
-			headerRow = "Computer Name, JSS ID, Serial Number"
-			members += [ headerRow ]
-
-			for computer in computers.findall('computer'):
-				#print str(computer)
-				comp_id = computer.find('id').text
-				name = computer.find('name').text
-				serial_number = computer.find('serial_number').text
-				#print str(comp_id)
-				#computerInfo = str(name)
-				#email_address = getUserEmailByComputerID(comp_id, username, password)
-				computerInfo = str(name) + ', ' + str(comp_id) + ', ' + str(serial_number)
-				computerInfo = cleanupOutput(computerInfo)
-				#print computerInfo.encode('ascii', 'ignore')
-				members += [ computerInfo ]
-
-			print '\n'.join (sorted(members))
-			print 'Total Computers: ' + str(len(members)-1)
-
-		elif '401' in str(responseCode):
-			print "Authorization failed"
-	except urllib2.HTTPError, err:
-		if '401' in str(err):
-			print 'Authorization failed, goodbye.'
-
 def cleanupOutput(inputString):
 	#print str(inputString)
 	return inputString.replace(u"\u2018", "'").replace(u"\u2019", "'").replace(u"\u201c", "\"").replace(u"\u201d", "\"")
@@ -1616,407 +1494,6 @@ def deleteComputerIDsFromCSV(computersCSV, username, password):
 			compID = row[0].replace('"', '').strip()
 			print 'Test Run: Delete computer ID ' + compID
 			deleteComputerByID(compID, username, password)
-
-
-### Policy Functions ###
-
-def getAllPolicies(username, password):
-	''' List all policies in JSS to screen '''
-
-	print "Getting All JAMF Policies..."
-	reqStr = jss_api_base_url + '/policies'
-
-	r = sendAPIRequest(reqStr, username, password, 'GET')
-
-	if r == -1:
-		return
-
-	baseXml = r.read()
-	responseXml = etree.fromstring(baseXml)
-
-	for policy in responseXml.findall('policy'):
-		policyName = policy.find('name').text
-		policyID = policy.find('id').text
-
-		print 'Policy ID: ' + policyID + ',  ' + 'Policy Name: ' + policyName + '\n'
-
-
-def listAllPolicies(username, password):
-	''' List all policies in JSS - for function use  '''
-
-	reqStr = jss_api_base_url + '/policies'
-
-	r = sendAPIRequest(reqStr, username, password, 'GET')
-
-	if r == -1:
-		return
-
-	baseXml = r.read()
-	responseXml = etree.fromstring(baseXml)
-	PoliciesList = []
-	for policy in responseXml.findall('policy'):
-		policyName = policy.find('name').text
-		policyID = policy.find('id').text
-		PoliciesList.append({'name': policyName, 'id': policyID})
-
-	return PoliciesList
-
-
-
-def listAllPolicyIds(username, password):
-	''' List all policy IDs in JSS - for function use - returns a list of Policy ID #s  '''
-
-	reqStr = jss_api_base_url + '/policies'
-
-	r = sendAPIRequest(reqStr, username, password, 'GET')
-
-	if r == -1:
-		return
-
-	baseXml = r.read()
-	responseXml = etree.fromstring(baseXml)
-	PolicyIDList = []
-	for policy in responseXml.findall('policy'):
-		policyID = policy.find('id').text
-		PolicyIDList.append(policyID)
-
-	return PolicyIDList
-
-
-
-def listPolicyStatusbyId(policyid, username, password):
-	''' Function to search for Policy ID by ID number and return status results for
-	use in functions '''
-
-
-	reqStr = jss_api_base_url + '/policies/id/' + policyid + '/subset/General'
-
-	r = sendAPIRequest(reqStr, username, password, 'GET')
-
-	if r != -1:
-
-		baseXml = r.read()
-		responseXml = etree.fromstring(baseXml)
-		general = responseXml.find('general')
-		status = general.find('enabled').text
-
-	return status
-
-
-
-def listPolicyNamebyId(policyid, username, password):
-	''' Function to search for Policy ID by ID number and return name for
-	use in functions '''
-
-	reqStr = jss_api_base_url + '/policies/id/' + policyid + '/subset/General'
-
-	r = sendAPIRequest(reqStr, username, password, 'GET')
-
-	if r != -1:
-
-		baseXml = r.read()
-		responseXml = etree.fromstring(baseXml)
-		general = responseXml.find('general')
-		name = general.find('name').text
-
-	return name
-
-
-def listPolicyScopebyId(policyid, username, password):
-	''' Function to search for Policy ID by ID number and return scope details as a
-	dict for use in functions '''
-
-	reqStr = jss_api_base_url + '/policies/id/' + policyid + '/subset/Scope'
-
-	r = sendAPIRequest(reqStr, username, password, 'GET')
-
-	scopeData = []
-
-	if r != -1:
-
-		baseXml = r.read()
-		responseXml = etree.fromstring(baseXml)
-		scope = responseXml.find('scope')
-		allcomputers = scope.find('all_computers').text
-		groups = scope.find('computer_groups')
-		comp_groups = []
-		comp_groupIDs = []
-		computers = scope.find('computers')
-		members = []
-		scope_details = {}
-
-		for comp in computers.findall('computer'):
-			if comp.find('name').text:
-				name = comp.find('name').text
-				members.append(name)
-
-		for g in groups.findall('computer_group'):
-			if g.find('name').text:
-				group_name = g.find('name').text
-				groupID = getComputerGroupId(group_name, username, password)
-				comp_groups.append(group_name)
-				comp_groupIDs.append(groupID)
-
-		scope_details = { "Policy ID: ": policyid, "All computers?: ": allcomputers, "Computer groups: ": comp_groups, "Computer group IDs: ": comp_groupIDs, "Specific computers: ": members }
-
-	return scope_details
-
-
-def listPolicyPackagesbyId(policyid, username, password):
-	''' Function to search for Policy ID by ID number and return package details as a list
-	for use in functions '''
-
-	reqStr = jss_api_base_url + '/policies/id/' + policyid + '/subset/Packages'
-
-	r = sendAPIRequest(reqStr, username, password, 'GET')
-
-	pkglist = []
-
-	if r != -1:
-
-		baseXml = r.read()
-		responseXml = etree.fromstring(baseXml)
-		pkgconfig = responseXml.find('package_configuration')
-		packages = pkgconfig.find('packages')
-
-		if packages.findall('package'):
-			for pkg in packages.findall('package'):
-				pkg_name = pkg.find('name').text
-				pkglist.append(pkg_name)
-
-
-	return pkglist
-
-
-def listPolicybyId(policyid, username, password):
-	''' Method to search for Policy ID by ID number and return General Policy Information, Scoping Information, and Package Configuration information - for use in functions '''
-
-	reqStr = jss_api_base_url + '/policies/id/' + policyid
-
-	r = sendAPIRequest(reqStr, username, password, 'GET')
-
-	if r != -1:
-
-		baseXml = r.read()
-		responseXml = etree.fromstring(baseXml)
-
-		policyDict = {}
-
-		## General Policy Information
-		general = responseXml.find('general')
-		name = general.find('name').text
-		policy_id = general.find('id').text
-		enabled = general.find('enabled').text
-		trigger = general.find('trigger').text
-		frequency = general.find('frequency').text
-
-
-		## Policy Scope Information
-		scope = responseXml.find('scope')
-		allcomputers = scope.find('all_computers').text
-		groups = scope.find('computer_groups')
-		comp_groups = []
-		computers = scope.find('computers')
-		members = []
-
-		for computer in computers.findall('computer'):
-			name = computer.find('name').text
-			members.append(name)
-
-		for g in groups.findall('computer_group'):
-			group_name = g.find('name').text
-			comp_groups.append(group_name)
-
-
-		## Package Configuration Information
-		pkgconfig = responseXml.find('package_configuration')
-		packages = pkgconfig.find('packages')
-		pkglist = []
-
-		for pkg in packages.findall('package'):
-			pkg_name = pkg.find('name').text
-			pkg_action = pkg.find('action').text
-			pkglist.append({"Package Name": pkg_name, "Package Action": pkg_action})
-
-		## Add policy details to policyDict and return
-		policyDict = { "Policy Name": name,
-					"Policy ID": policy_id,
-					"Policy Enabled": enabled,
-					"Policy Trigger": trigger,
-					"Policy Frequency": frequency,
-					"All Computers in Scope": allcomputers,
-					"Scoped Computers": members,
-					"Scoped Computer Groups": comp_groups,
-					"Package Configuration": pkglist
-					 }
-
-		return policyDict
-
-
-	else:
-		print 'Failed to find policy with ID ' + policyid
-
-def getEnabledPolicies(username, password):
-	''' Function to get all policies and filter out only currently enabled policies '''
-
-	## List for holding all policies / Empty list for results
-	AllPolicies = listAllPolicyIds(username, password)
-	EnabledPolicies = []
-
-	print '\nAbout to find all Enabled policies.  This may take some time...\n\n'
-
-	print 'There are a total of {} policies...\n'.format(len(AllPolicies))
-
-	for n in AllPolicies:
-		thisPolicy = listPolicybyId(n, username, password)
-		if thisPolicy["Policy Enabled"] == 'true':
-			EnabledPolicies.append({ "Policy ID": thisPolicy["Policy ID"], "Policy Name": thisPolicy["Policy Name"]})
-			print '{} is an enabled policy'.format(thisPolicy["Policy Name"])
-
-
-	print '\nTotal policies in JSS:  {}'.format(len(AllPolicies))
-	print '\nTotal enabled policies:  {}'.format(len(EnabledPolicies))
-
-	print '\nThe following policies are currently enabled: \n'
-
-	for pol in EnabledPolicies:
-		print pol
-
-
-
-
-def getEnabledPoliciestoCSV(username, password):
-	''' get Enabled Policies and export to CSV, along with scope and package info '''
-
-	## List for holding all policies / Empty list for results
-	AllPolicies = listAllPolicyIds(username, password)
-	EnabledPolicies = []
-
-	csvOutPutFile = raw_input("\nEnter file name for desired CSV:  ")
-
-	print '\nAbout to find all Enabled policies.  Grab a coffee.  This may take some time...\n\n'
-
-	## iterate over AllPolicies dict
-	## add to "EnabledPolicies" list if status ('enabled') evaluates true
-
-	with open(csvOutPutFile, "a") as file:
-		headers = ["Policy Name", "Policy ID", "Policy Enabled", "Policy Trigger", "Policy Frequency", "All Computers in Scope", "Scoped Computers", "Scoped Computer Groups", "Package Configuration"]
-		csv_writer = DictWriter(file, fieldnames=headers)
-		csv_writer.writeheader()
-
-		for n in AllPolicies:
-			thisPolicy = listPolicybyId(n, username, password)
-			if thisPolicy["Policy Enabled"] == 'true':
-				csv_writer.writerow({
-					"Policy ID": thisPolicy["Policy ID"],
-					"Policy Name": thisPolicy["Policy Name"],
-					"Policy Enabled": thisPolicy["Policy Enabled"],
-					"Policy Trigger": thisPolicy["Policy Trigger"],
-					"Policy Frequency": thisPolicy["Policy Frequency"],
-					"All Computers in Scope": thisPolicy["All Computers in Scope"],
-					"Scoped Computers": thisPolicy["Scoped Computers"],
-					"Scoped Computer Groups": thisPolicy["Scoped Computer Groups"],
-					"Package Configuration": thisPolicy["Package Configuration"]
-					})
-				print '{} is an enabled policy'.format(thisPolicy["Policy Name"])
-				EnabledPolicies.append(thisPolicy["Policy Name"])
-
-	print '\nResults are now available in ' + csvOutPutFile
-
-def getPoliciesScopedtoGroup(groupid, username, password):
-	''' Function to look up all enabled policies scoped to a user-specified group.
-	Function iterate '''
-
-	## List variables for holding all policies, enabled policies, scope data, and final results
-	AllPolicyIDs = listAllPolicyIds(username, password)
-	scopeDetails = []
-	groupScopeDetails = []
-
-	print '\nSorting ALL THOSE policies. This may take quite a while...\n\n'
-
-	print 'There are currently {} policies in the JSS\n'.format(len(AllPolicyIDs))
-
-	# get all enabled policies' scope information as dict, save to list
-	for polID in AllPolicyIDs:
-		scopeDetails.append(listPolicyScopebyId(polID, username, password))
-		print 'Evaluating policy {} for scope details...'.format(polID)
-
-	# iterate over Dict - if Groups in dict matches groupid, add to 'groupScopeDetails' list
-	for p in scopeDetails:
-		pData = {}
-		groupIDlist = p["Computer group IDs: "]
-		if groupid in groupIDlist:
-			pData = { "Policy ID": p["Policy ID: "], "Policy Name": listPolicyNamebyId(p["Policy ID: "], username, password) }
-			groupScopeDetails.append(pData)
-
-	if groupScopeDetails:
-		print '\nTHE FOLLOWING POLICIES ARE SCOPED TO GROUP ID {}: \n'.format(groupid)
-		for s in groupScopeDetails:
-			print '\nPolicy ID: ' + s["Policy ID"]
-			print 'Policy Name: ' + s["Policy Name"] + '\n'
-
-	else:
-		print '\nNo policies were found scoped to Group {}'.format(groupid)
-		return
-
-## Extended Computer Group Functions
-
-def getAllComputerGroups(username, password):
-	''' Lists all computer groups in JSS to screen, returning ID, name, and type '''
-
-	print "Getting All JAMF Computer Groups...\n"
-	reqStr = jss_api_base_url + '/computergroups'
-
-	r = sendAPIRequest(reqStr, username, password, 'GET')
-
-	if r == -1:
-		return
-
-	baseXml = r.read()
-	responseXml = etree.fromstring(baseXml)
-	groupCount = 0
-	smartCount = 0
-	staticCount = 0
-
-	for group in responseXml.findall('computer_group'):
-		groupCount += 1
-		groupID = group.find('id').text
-		groupName = group.find('name').text
-
-		if group.find('is_smart').text == 'true':
-			groupType = 'Smart'
-			smartCount += 1
-		else:
-			groupType = 'Static'
-			staticCount += 1
-
-		print 'Group ID: ' + groupID + ', ' + 'Group Name: ' + groupName + 'Group Type: ' + groupType + '\n'
-
-	print '\nThere are {} total Computer Groups in the JSS'.format(groupCount)
-	print '\nThere are {} Smart Groups, and {} Static Groups\n'.format(smartCount, staticCount)
-
-
-def getComputerGroupId(groupSearch, username, password):
-	groupSearch_normalized = urllib2.quote(groupSearch)
-
-	reqStr = jss_api_base_url + '/computergroups/name/' + groupSearch_normalized
-
-	r = sendAPIRequest(reqStr, username, password, 'GET')
-
-	if r != -1:
-		responseCode = r.code
-		#print 'Response Code: ' + str(responseCode)
-
-		baseXml = r.read()
-		responseXml = etree.fromstring(baseXml)
-
-		computerGroupId = responseXml.find('id').text
-		#print computerGroupId
-		return computerGroupId
-	else:
-		#print 'Group not found.'
-		return -1
-
 
 
 def getComputerCommands(username, password):
@@ -2335,10 +1812,10 @@ def main():
 		getComputerByID(computerID, user, password)
 	elif APIcommand == 'getcomputergroupid':
 		groupSearch = args.groupsearch
-		getComputerGroupId(groupSearch, user, password)
+		computergroups.getComputerGroupId(groupSearch, user, password)
 	elif APIcommand == 'getcomputergroupmembers':
 		groupSearch = args.groupsearch
-		getComputerGroupMembers(groupSearch, user, password)
+		computergroups.getComputerGroupMembers(groupSearch, user, password)
 	elif APIcommand == 'getmobiledevice':
 		mobilesearch = args.mobilesearch
 		detail = args.detail
@@ -2353,19 +1830,19 @@ def main():
 		mobileDevicesCSV = args.csvfile
 		printMobileDevicesCSV(mobileDevicesCSV, user, password)
 	elif APIcommand == 'getallcomputergroups':
-		getAllComputerGroups(user, password)
+		computergroups.getAllComputerGroups(user, password)
 	elif APIcommand == 'getallpolicies':
 		policies_core.getAllPolicies(user, password)
 	elif APIcommand == 'getpolicybyid':
 		policyid = args.policyid
 		policies_core.getPolicybyId(policyid, user, password)
 	elif APIcommand == 'getenabledpolicies':
-		getEnabledPolicies(user, password)
+		policies_extended.getEnabledPolicies(user, password)
 	elif APIcommand == 'getenabledpoliciestocsv':
-		getEnabledPoliciestoCSV(user, password)
+		policies_extended.getEnabledPoliciestoCSV(user, password)
 	elif APIcommand == 'getpoliciesscopedtogroup':
 		groupid = args.groupid
-		getPoliciesScopedtoGroup(groupid, user, password)
+		policies_extended.getPoliciesScopedtoGroup(groupid, user, password)
 	elif APIcommand == 'lockmobiledevice':
 		mobileSearch = args.mobileSearch
 		lockMobileDevice(mobileSearch, user, password)
