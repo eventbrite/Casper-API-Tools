@@ -34,6 +34,8 @@ from xml.dom import minidom
 
 import subprocess
 
+## Import locally created libraries
+
 from policies import policies_core
 from computers import computer_core
 from mobiledevices import mobiledevice_core
@@ -878,28 +880,6 @@ def findMobileDeviceId(searchString, username, password):
 	else:
 		print 'Error'
 
-def updateMobileAssetTag(mobileSearch, asset_tag, username, password):
-	print 'Updating asset tag for mobile device ' + mobileSearch + ' with asset tag ' + asset_tag + '...'
-	mobile_id = getMobileDeviceId(mobileSearch, username, password)
-	if str(mobile_id) == '-1':
-		print 'Mobile device ' + mobileSearch + ' not found, please try again.'
-		return
-	elif str(mobile_id) == '-2':
-		print 'More than one mobile device matching search string ' + str(mobileSearch) + ', please try again.'
-		return
-
-	putStr = jss_api_base_url + '/mobiledevices/id/' + mobile_id
-	#print putStr
-
-	putXML = "<mobile_device><general><asset_tag>" + asset_tag + "</asset_tag></general></mobile_device>"
-	response = sendAPIRequest(putStr, username, password, 'PUT', putXML)
-
-	if response == -1:
-		print 'Failed to update asset tag for mobile device ' + mobileSearch + ', see error above.'
-		return
-	else:
-		print 'Successfully updated asset tag for mobile device ' + mobileSearch + '.'
-
 def updateMobileAssetTagsCSV(mobileAssetTagsCSV, username, password):
 
 	# CSV file with two columns (with headers), first column = unique mobile search string (typically serial number), second column = asset tag
@@ -914,7 +894,7 @@ def updateMobileAssetTagsCSV(mobileAssetTagsCSV, username, password):
 			mobileSearch = row[0].replace('"', '').strip()
 			mobileAssetTag = row[1].replace('"', '').strip()
 			#print 'Test Run: Update mobile asset ' + mobileSearch + ' with asset tag ' + mobileAssetTag
-			updateMobileAssetTag(mobileSearch, mobileAssetTag, username, password)
+			mobiledevice_core.updateMobileAssetTag(mobileSearch, mobileAssetTag, username, password)
 
 def updateMobileDeviceInventory(mobileSearch, username, password):
 	print 'Issuing Update Inventory command for mobile device ' + mobileSearch + ' ...'
@@ -2513,7 +2493,7 @@ def main():
 	elif APIcommand == 'updatemobileassettag':
 		mobileSearch = args.mobileSearch
 		assetTag = args.assetTag
-		updateMobileAssetTag(mobileSearch, assetTag, user, password)
+		mobiledevice_core.updateMobileAssetTag(mobileSearch, assetTag, user, password)
 	elif APIcommand == 'updatemobileassettagcsv':
 		csvfile = args.csvfile
 		updateMobileAssetTagsCSV(csvfile, user, password)

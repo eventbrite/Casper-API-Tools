@@ -151,3 +151,26 @@ def getMobileDeviceByID(mobileID, username, password):
 		#print etree.tostring(responseXml)
 	else:
 		print 'Failed to find mobile device with JSS ID ' + mobileID
+
+
+def updateMobileAssetTag(mobileSearch, asset_tag, username, password):
+	print 'Updating asset tag for mobile device ' + mobileSearch + ' with asset tag ' + asset_tag + '...'
+	mobile_id = getMobileDeviceId(mobileSearch, username, password)
+	if str(mobile_id) == '-1':
+		print 'Mobile device ' + mobileSearch + ' not found, please try again.'
+		return
+	elif str(mobile_id) == '-2':
+		print 'More than one mobile device matching search string ' + str(mobileSearch) + ', please try again.'
+		return
+
+	putStr = jss_api_base_url + '/mobiledevices/id/' + mobile_id
+	#print putStr
+
+	putXML = "<mobile_device><general><asset_tag>" + asset_tag + "</asset_tag></general></mobile_device>"
+	response = apirequests.sendAPIRequest(putStr, username, password, 'PUT', putXML)
+
+	if response == -1:
+		print 'Failed to update asset tag for mobile device ' + mobileSearch + ', see error above.'
+		return
+	else:
+		print 'Successfully updated asset tag for mobile device ' + mobileSearch + '.'
