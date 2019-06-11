@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# Casper API Tools version 0.2.0
+# Casper API Tools version 0.3.0
 
 ##############################################################
 ##############################################################
@@ -7,7 +7,7 @@
 # Casper API Tools Command Line Inteface
 # https://github.com/eventbrite/Casper-API-Tools
 # Original Script created by: Jason Kuo
-# Updated 05/08/2017
+# Updated 06/11/2019
 #
 ##############################################################
 ##############################################################
