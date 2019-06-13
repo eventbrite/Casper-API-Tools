@@ -39,6 +39,7 @@ import subprocess
 from policies import policies_core
 from policies import policies_extended
 from computers import computer_core
+from computers import computer_lifecycle
 from computergroups import computergroups
 from mobiledevices import mobiledevice_core
 from mobiledevices import mobiledevice_lifecycle
@@ -912,118 +913,6 @@ def cleanupOutput(inputString):
 def getSerialNumber():
 	print 'test'
 
-def unmanageComputer(comp_id, username, password):
-	print "Unmanaging computer " + comp_id + "..."
-
-	#reqStr = jss_api_base_url + '/computercommands/command/UnmanageDevice'
-	#print reqStr
-
-	putStr = jss_api_base_url + '/computers/id/' + comp_id
-	#print putStr
-
-	#postXML = "<computers><computer><general><id>" + comp_id + "</id><remote_management><managed>false</managed></remote_management></general></computer></computers>"
-
-	putXML = "<computer><general><remote_management><managed>false</managed></remote_management></general></computer>"
-	response = sendAPIRequest(putStr, username, password, 'PUT', putXML)
-
-	if response == -1:
-		print 'Failed to unmanage computer ID ' + comp_id + '. Make sure the computer actually exists in the JSS.'
-	else:
-		responseCode = str(response.code)
-		#print 'Response Code: ' + responseCode
-		if responseCode == '201':
-			print 'Successfully unmanaged computer ID ' + comp_id + '...'
-
-
-		## Uncomment this part to see the xml response
-		#xmlstring = response.read()
-		#xml = etree.fromstring(xmlstring)
-		#print prettify(xml)
-
-# def updateAssetTag(comp_id, asset_tag, username, password):
-# 	print 'Updating asset tag for computer ID ' + comp_id + ' with asset tag ' + asset_tag + '...'
-
-# 	putStr = jss_api_base_url + '/computers/id/' + comp_id
-# 	#print putStr
-
-# 	putXML = "<computer><general><asset_tag>" + asset_tag + "</asset_tag></general></computer>"
-# 	response = sendAPIRequest(putStr, username, password, 'PUT', putXML)
-
-# 	if response == -1:
-# 		print 'Failed to update asset tag for computer ' + comp_id + ', see error above.'
-# 		return
-# 	else:
-# 		print 'Successfully updated asset tag for computer ' + comp_id + '.'
-
-# def updateComputerUserInfo(comp_id, username, real_name, email_address, position, phone, department, building, room, overwrite, jssuser, jsspassword):
-
-
-# 	putStr = jss_api_base_url + '/computers/id/' + comp_id
-# 	if overwrite == 'y':
-# 		print 'Overwriting all existing user and location info for computer ID ' + comp_id + ' with the following:\n' + '\n  Username: ' + username + '\n  Full Name: ' + real_name + '\n  Email: ' + email_address + '\n  Position: ' + position + '\n  Phone: ' + str(phone) + '\n  Department: ' + department + '\n  Building: ' + building + '\n  Room: ' + room + '\n'
-# 		putXML = "<computer><location><username>" + username + "</username><real_name>" + real_name + "</real_name><email_address>" + email_address + "</email_address><position>" + position + "</position><phone>" + str(phone) + "</phone><department>" + department + "</department><building>" + building + "</building><room>" + room + "</room></location></computer>"
-# 	else:
-# 		updateStr = 'Updating user and location info for computer ID ' + comp_id + ' with the following:\n'
-# 		putXML = "<computer><location>"
-# 		updateCount = 0
-
-# 		if username != '':
-# 			putXML += '<username>' + username + '</username>'
-# 			updateStr += '\n  Username : ' + username
-# 			updateCount += 1
-
-# 		if real_name != '':
-# 			putXML += '<real_name>' + real_name + '</real_name>'
-# 			updateStr += '\n Full Name: ' + real_name
-# 			updateCount += 1
-
-# 		if email_address != '':
-# 			putXML += '<email_address>' + email_address + '</email_address>'
-# 			updateStr += '\n  Email: ' + email_address
-# 			updateCount += 1
-
-# 		if position != '':
-# 			putXML += '<position>' + position + '</position>'
-# 			updateStr += '\n  Position: ' + position
-# 			updateCount += 1
-
-# 		if phone != '':
-# 			putXML += '<phone>' + str(phone) + '</phone>'
-# 			updateStr += '\n  Phone: ' + str(phone)
-# 			updateCount += 1
-
-# 		if department != '':
-# 			putXML += '<department>' + department + '</department>'
-# 			updateStr += '\n  Department: ' + department
-# 			updateCount += 1
-
-# 		if building != '':
-# 			putXML += '<building>' + building + '</building>'
-# 			updateStr += '\n  Building: ' + building
-# 			updateCount += 1
-
-# 		if room != '':
-# 			putXML += '<room>' + room + '</room>'
-# 			updateStr += '\n  Room: ' + room
-# 			updateCount += 1
-
-# 		putXML += "</location></computer>"
-
-# 		if updateCount == 0:
-# 			# Nothing to update
-# 			print "Nothing to update."
-# 			return
-
-
-# 	#print putXML
-
-# 	response = sendAPIRequest(putStr, jssuser, jsspassword, 'PUT', putXML)
-
-# 	if response == -1:
-# 		print 'Failed to update user and location info for computer ' + comp_id + ', see error above.'
-# 		return
-# 	else:
-# 		print 'Successfully updated user and location info for computer ' + comp_id + '.'
 
 def updateMobileDeviceUserInfo(mobile_id, username, real_name, email_address, position, phone, department, building, room, overwrite, jssuser, jsspassword):
 
@@ -1094,31 +983,7 @@ def updateMobileDeviceUserInfo(mobile_id, username, real_name, email_address, po
 	else:
 		print 'Successfully updated user and location info for mobile device ' + mobile_id + '.'
 
-# def updateComputerUserInfoFromCSV(computersCSV, username, password):
 
-# 	# CSV File with 9 columns: JSS Computer ID, Username, Full Name, Email, Position, Phone, Department, Building, Room, Overwrite
-
-# 	with open (computersCSV, 'rU') as csvfile:
-# 		computerreader = csv.reader(csvfile, delimiter=',', quotechar='|')
-
-# 		#Skip the header row
-# 		next(computerreader, None)
-
-# 		for row in computerreader:
-# 			compID = row[0].replace('"', '').strip()
-# 			uName = row[1].replace('"', '').strip()
-# 			fullName = row[2].replace('"', '').strip()
-# 			email = row[3].replace('"', '').strip()
-# 			position = row[4].replace('"', '').strip()
-# 			phone = row[5].replace('"', '').strip()
-# 			department = row[6].replace('"', '').strip()
-# 			building = row[7].replace('"', '').strip()
-# 			room = row[8].replace('"', '').strip()
-# 			overwrite = row[9].replace('"', '').strip()
-
-# 			print 'Update computer user info with ' + 'JSS ID: ' + compID + ' Username: ' + uName + ' Full Name: ' + fullName + ' Email: ' + email + ' Position: ' + position + ' Phone: ' + str(phone) + ' Dept: ' + department + 'Bldg: ' + building + ' Room: ' + room + ' Overwrite: ' + overwrite
-# 			updateComputerUserInfo(compID, uName, fullName, email, position, phone, department, building, room, overwrite, username, password)
-# 	return
 
 def updateMobileDeviceUserInfoFromCSV(mobiledevicesCSV, username, password):
 
@@ -1146,65 +1011,6 @@ def updateMobileDeviceUserInfoFromCSV(mobiledevicesCSV, username, password):
 			updateMobileDeviceUserInfo(mobileDeviceID, uName, fullName, email, position, phone, department, building, room, overwrite, username, password)
 	return
 
-
-def unmanageComputerIDsFromCSV(computersCSV, username, password):
-
-	# CSV file with one column, just JSS computer IDs
-
-	with open (computersCSV, 'rU') as csvfile:
-		computerreader = csv.reader(csvfile, delimiter=',', quotechar='|')
-
-		#Skip the header row
-		next(computerreader, None)
-
-		for row in computerreader:
-			compID = row[0].replace('"', '').strip()
-			#print 'Test Run: Unmanage computer ID ' + compID
-			unmanageComputer(compID, username, password)
-
-def deleteComputerByID(comp_id, username, password):
-
-	getComputerByID(comp_id, username, password)
-
-	sure = raw_input('Are you sure you want to delete the computer above from the JSS? (y/n): ')
-
-	if sure == 'y':
-		print "Deleting computer " + comp_id + "..."
-
-		delStr = jss_api_base_url + '/computers/id/' + comp_id
-		#print delStr
-		response = sendAPIRequest(delStr, username, password, 'DELETE')
-
-		if response == -1:
-			print 'Failed to delete computer. See errors above.'
-		else:
-			print 'Successfully deleted computer ' + comp_id
-
-	else:
-		print 'Aborting request to delete computer ' + comp_id
-
-		## Uncomment this part to see the xml response
-		#xmlstring = response.read()
-		#xml = etree.fromstring(xmlstring)
-		#print prettify(xml)
-
-		#responseCode = str(response.code)
-		#print 'Response Code: ' + responseCode
-
-def deleteComputerIDsFromCSV(computersCSV, username, password):
-
-	# CSV file with one column, just JSS computer IDs
-
-	with open (computersCSV, 'rU') as csvfile:
-		computerreader = csv.reader(csvfile, delimiter=',', quotechar='|')
-
-		#Skip the header row
-		next(computerreader, None)
-
-		for row in computerreader:
-			compID = row[0].replace('"', '').strip()
-			print 'Test Run: Delete computer ID ' + compID
-			deleteComputerByID(compID, username, password)
 
 
 def getComputerCommands(username, password):
@@ -1504,10 +1310,10 @@ def main():
 		clearMobileDevicePasscode(mobileSearch, user, password)
 	elif APIcommand == 'deletecomputerbyid':
 		computerID = args.computerID
-		deleteComputerByID(computerID, user, password)
+		computer_lifecycle.deleteComputerByID(computerID, user, password)
 	elif APIcommand == 'deletecomputeridsfromcsv':
 		computersCSV = args.csvfile
-		deleteComputerIDsFromCSV(computersCSV, user, password)
+		computer_lifecycle.deleteComputerIDsFromCSV(computersCSV, user, password)
 	elif APIcommand == 'deletemobiledevicebyid':
 		mobiledeviceID = args.mobiledeviceID
 		mobiledevice_lifecycle.deleteMobileDeviceByID(mobiledeviceID, user, password)
@@ -1570,10 +1376,10 @@ def main():
 		removeMobileDeviceFromGroup(mobileSearch, mobileGroupSearch, user, password)
 	elif APIcommand == "unmanagecomputer":
 		computerID = args.computerID
-		unmanageComputer(computerID, user, password)
+		computer_lifecycle.unmanageComputer(computerID, user, password)
 	elif APIcommand == 'unmanagecomputeridsfromcsv':
 		computersCSV = args.csvfile
-		unmanageComputerIDsFromCSV(computersCSV, user, password)
+		computer_lifecycle.unmanageComputerIDsFromCSV(computersCSV, user, password)
 	elif APIcommand == 'updateassettag':
 		computerID = args.computerID
 		assetTag = args.assetTag
