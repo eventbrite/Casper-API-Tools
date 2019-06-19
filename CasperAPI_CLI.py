@@ -7,7 +7,7 @@
 # Casper API Tools Command Line Inteface
 # https://github.com/eventbrite/Casper-API-Tools
 # Original Script created by: Jason Kuo
-# Updated 06/11/2019
+# Updated 06/19/2019
 #
 ##############################################################
 ##############################################################
@@ -41,8 +41,10 @@ from policies import policies_extended
 from computers import computer_core
 from computers import computer_lifecycle
 from computergroups import computergroups
+from mobiledevices import mobiledevices
 from mobiledevices import mobiledevice_core
 from mobiledevices import mobiledevice_lifecycle
+from mobiledevices import mobiledevicegroups
 
 __version__ = '0.3.0'
 
@@ -283,734 +285,13 @@ def getAccounts(username, password):
 			#name = uObj.find('name').text
 			#print name
 
-
-def getMobileDevice(mobileDeviceName, username, password, detail):
-	mobileDeviceName_normalized = urllib2.quote(mobileDeviceName)
-	reqStr = jss_api_base_url + '/mobiledevices/match/' + mobileDeviceName_normalized
-	#print reqStr
-	#print detail
-
-	r = sendAPIRequest(reqStr, username, password, 'GET')
-
-	if r == -1:
-		return
-
-	#responseCode = r.code
-	baseXml = r.read()
-	#print baseXml
-	responseXml = etree.fromstring(baseXml)
-
-	print 'All mobile devices with ' + mobileDeviceName + ' as part of the device information:\n'
-
-	for mobile_device in responseXml.findall('mobile_device'):
-		name = mobile_device.find('name').text
-		sn = mobile_device.find('serial_number').text
-		mac_addr = mobile_device.find('mac_address').text
-		jssID = mobile_device.find('id').text
-
-		if detail == 'yes':
-			getMobileDeviceByID(jssID, username, password)
-		else:
-			print 'Mobile Device Name: ' + name
-			print 'Serial Number: ' + sn
-			print 'Mac Address: ' + str(mac_addr)
-			print 'JSS Mobile Device ID: ' + jssID + '\n'
-
-## Get single mobile device Id. If no results, return -1, if more than one result, return -2, if exactly one result, return mobile device id.
-def getMobileDeviceId(mobileDeviceName, username, password):
-	mobileDeviceName_normalized = urllib2.quote(mobileDeviceName)
-	reqStr = jss_api_base_url + '/mobiledevices/match/' + mobileDeviceName_normalized
-
-	r = sendAPIRequest(reqStr, username, password, 'GET')
-
-	if r == -1:
-		return -1
-
-	#responseCode = r.code
-	baseXml = r.read()
-	#print baseXml
-	responseXml = etree.fromstring(baseXml)
-
-	response_size = responseXml.find('size').text
-
-	if response_size == '0':
-		#print 'Mobile Device not found, please search again.'
-		return -1
-	elif response_size == '1':
-		return responseXml.find('mobile_device/id').text
-	else:
-		#print 'Too many results, narrow your search paramaters.'
-		return -2
-
-def getMobileDeviceByID(mobileID, username, password):
-	print "Getting mobile device with JSS ID " + mobileID + "..."
-	reqStr = jss_api_base_url + '/mobiledevices/id/' + mobileID
-
-	#print reqStr
-
-	r = sendAPIRequest(reqStr, username, password, 'GET')
-
-	if r != -1:
-		responseCode = r.code
-
-		#print 'Response Code: ' + str(responseCode)
-
-		baseXml = r.read()
-		#print baseXml
-		responseXml = etree.fromstring(baseXml)
-
-		#print responseXml.tag
-
-		general = responseXml.find('general')
-		jssID = general.find('id').text
-		name = general.find('name').text
-		model = general.find('model').text
-		last_inventory_update = general.find('last_inventory_update').text
-		asset_tag = general.find('asset_tag').text
-		os_version = general.find('os_version').text
-		sn = general.find('serial_number').text
-		mac_addr = general.find('wifi_mac_address').text
-		ip_addr = general.find('ip_address').text
-		managed = general.find('managed').text
-		supervised = general.find('supervised').text
-
-		print '\nGENERAL INFORMATION:'
-		print 'JSS Mobile Device ID: ' + jssID
-		print 'Mobile Name: ' + name
-		print 'Model: ' + model
-		print 'Last Inventory Update: ' + last_inventory_update
-		print 'Asset Number: ' + str(asset_tag)
-		print 'OS Version: ' + os_version
-		print 'Serial Number: ' + sn
-		print 'Mac Address: ' + mac_addr
-		print 'IP Address: ' + ip_addr
-		print 'Managed: ' + managed
-		print 'Supervised: ' + supervised
-
-
-		assigned_user = responseXml.find('location/username').text
-		real_name = responseXml.find('location/real_name').text
-		email_address = responseXml.find('location/email_address').text
-		position = responseXml.find('location/position').text
-		phone = responseXml.find('location/phone').text
-		department = responseXml.find('location/department').text
-		building = responseXml.find('location/building').text
-		room = responseXml.find('location/room').text
-
-		print '\nUSER AND LOCATION:'
-		print 'Username: ' + str(assigned_user)
-		print 'Real Name: ' + str(real_name)
-		print 'Email: ' + str(email_address)
-		print 'Position: ' + str(position)
-		print 'Phone: ' + str(phone)
-		print 'Department: ' + str(department)
-		print 'Building: ' + str(building)
-		print 'Room: ' + str(room)
-
-		mobile_device_groups = responseXml.find('mobile_device_groups')
-
-		groups = []
-		for group in mobile_device_groups.findall('mobile_device_group'):
-			groupId = group.find('id').text
-			groupName = group.find('name').text
-			groupPair = str(groupId) + ': ' + str(groupName)
-			groups += [ groupPair ]
-			#print groupName
-		print '\nMOBILE DEVICE GROUPS: '
-		print '\n'.join (sorted (groups))
-
-		print '\n'
-		#print prettify(responseXml)
-
-		#print etree.tostring(responseXml)
-	else:
-		print 'Failed to find mobile device with JSS ID ' + mobileID
-
-def getMobileDeviceGroup(mobile_device_group_name, username, password):
-	print 'Getting mobile device group named: ' + mobile_device_group_name + '...'
-	mobile_device_group_name_normalized = urllib2.quote(mobile_device_group_name)
-
-	reqStr = jss_api_base_url + '/mobiledevicegroups/name/' + mobile_device_group_name_normalized
-
-
-	#print reqStr
-
-	r = sendAPIRequest(reqStr, username, password, 'GET')
-
-	if r != -1:
-		responseCode = r.code
-
-		#print 'Response Code: ' + str(responseCode)
-
-		baseXml = r.read()
-		responseXml = etree.fromstring(baseXml)
-
-		mobileDeviceGroupId = responseXml.find('id').text
-		mobileDeviceGroupSize = responseXml.find('mobile_devices/size').text
-
-		#print prettify(responseXml)
-
-		if str(mobileDeviceGroupSize) == '0':
-			print 'No devices in this group'
-			return mobileDeviceGroupId
-
-		print 'Group ID: ' + mobileDeviceGroupId
-		#print prettify(responseXml)
-		mobiledevicemembers = responseXml.find('mobile_devices')
-
-		mobiledevices = []
-		for mobiledevice in mobiledevicemembers.findall('mobile_device'):
-			mobiledevicename = mobiledevice.find('name').text
-			mobiledeviceid = mobiledevice.find('id').text
-			mobiledeviceserial = mobiledevice.find('serial_number').text
-			mobiledeviceinfo = str(mobiledevicename) + ', ' + str(mobiledeviceid) + ', ' + str(mobiledeviceserial)
-			mobiledevices += [ mobiledeviceinfo ]
-		print 'All devices in group ' + mobile_device_group_name + ' [name, jss_id, serial_no]:\n'
-		print '\n'.join (sorted (mobiledevices))
-		print '\nTotal Devices: ' + str(len(mobiledevices))
-		return mobileDeviceGroupId
-	else:
-		print 'Failed to find mobile device group with name ' + mobile_device_group_name
-		return -1
-
-def addMobileDeviceToGroup(mobile_device, mobile_device_group, username, password):
-	# Find mobile device JSS ID
-	mobile_device_id = getMobileDeviceId(mobile_device, username, password)
-	if str(mobile_device_id) == '-1':
-		print 'Mobile device ' + mobile_device + ' not found, please try again.'
-		return
-	elif str(mobile_device_id) == '-2':
-		print 'More than one mobile device found matching search string ' + mobile_device + ', please try again.'
-		return
-
-	# Find mobile device group ID
-	mobile_device_group_id = getMobileDeviceGroup(mobile_device_group, username, password)
-	if str(mobile_device_group_id) == '-1':
-		print 'Mobile device group ' + mobile_device_group + ' not found, please try again.'
-		return
-
-	print 'Adding mobile device id ' + str(mobile_device_id) + ' to group id ' + str(mobile_device_group_id)
-
-	putStr = jss_api_base_url + '/mobiledevicegroups/id/' + str(mobile_device_group_id)
-	putXML = '<mobile_device_group><mobile_device_additions><mobile_device><id>' + str(mobile_device_id) + '</id></mobile_device></mobile_device_additions></mobile_device_group>'
-
-	#print putStr
-	#print putXML
-	#return
-
-	response = sendAPIRequest(putStr, username, password, 'PUT', putXML)
-
-	if response == -1:
-		print 'Failed to add mobile device ' + mobile_device + ' to group, see error above.'
-		return
-	else:
-		print 'Successfully added mobile device ' + mobile_device + ' to group ' + mobile_device_group + '.'
-
-
-def removeMobileDeviceFromGroup(mobile_device, mobile_device_group, username, password):
-	# Find mobile device JSS ID
-	mobile_device_id = getMobileDeviceId(mobile_device, username, password)
-	if str(mobile_device_id) == '-1':
-		print 'Mobile device ' + mobile_device + ' not found, please try again.'
-		return
-	elif str(mobile_device_id) == '-2':
-		print 'More than one mobile device matching search string ' + mobile_device + ', please try again.'
-		return
-
-	# Find mobile device group ID
-	mobile_device_group_id = getMobileDeviceGroup(mobile_device_group, username, password)
-	if str(mobile_device_group_id) == '-1':
-		print 'Mobile device group ' + mobile_device_group + ' not found, please try again.'
-		return
-
-	print 'Removing mobile device id ' + str(mobile_device_id) + ' from group id ' + str(mobile_device_group_id)
-
-	putStr = jss_api_base_url + '/mobiledevicegroups/id/' + str(mobile_device_group_id)
-	putXML = '<mobile_device_group><mobile_device_deletions><mobile_device><id>' + str(mobile_device_id) + '</id></mobile_device></mobile_device_deletions></mobile_device_group>'
-
-	#print putStr
-	#print putXML
-	#return
-
-	response = sendAPIRequest(putStr, username, password, 'PUT', putXML)
-
-	if response == -1:
-		print 'Failed to remove mobile device ' + mobile_device + ' to group, see error above.'
-		return
-	else:
-		print 'Successfully remove mobile device ' + mobile_device + ' to group ' + mobile_device_group + '.'
-
-## Find Mobile Device using search string using name, serial number, asset tag, etc.
-## Name, mac address, etc. to filter by. Match uses the same format as the general search in the JSS. For instance, admin* can be used to match mobile device names that begin with admin
-
-def findMobileDeviceId(searchString, username, password):
-	#print 'Searching for mobile device with string ' + searchString
-	searchString_normalized = urllib2.quote(searchString)
-
-	reqStr = jss_api_base_url + '/mobiledevices/match/' + searchString_normalized
-	#print reqStr
-	r = sendAPIRequest(reqStr, username, password, 'GET')
-
-	if r != -1:
-		responseCode = r.code
-		baseXml = r.read()
-		responseXml = etree.fromstring(baseXml)
-		#print prettify(responseXml)
-		#return
-
-		#mobiledevicemembers = responseXml.find('mobile_devices')
-		#print mobiledevicemembers
-		#return
-		result_size = responseXml.find('size').text
-		#print 'hello' + str(result_size)
-
-		if result_size == '0':
-			print 'No matches found.'
-			return -1
-		elif result_size == '1':
-			#print 'Single match found'
-			mobile_device_id = responseXml.find('mobile_device/id').text
-			print mobile_device_id
-			return mobile_device_id
-			#print prettify(responseXml)
-		else:
-			print 'Multiple matches found, please narrow your search.'
-			return -1
-	else:
-		print 'Error'
-
-def updateMobileAssetTagsCSV(mobileAssetTagsCSV, username, password):
-
-	# CSV file with two columns (with headers), first column = unique mobile search string (typically serial number), second column = asset tag
-
-	with open (mobileAssetTagsCSV, 'rU') as csvfile:
-		csvreader = csv.reader(csvfile, delimiter=',', quotechar='|')
-
-		#Skip the header row
-		next(csvreader, None)
-
-		for row in csvreader:
-			mobileSearch = row[0].replace('"', '').strip()
-			mobileAssetTag = row[1].replace('"', '').strip()
-			#print 'Test Run: Update mobile asset ' + mobileSearch + ' with asset tag ' + mobileAssetTag
-			mobiledevice_core.updateMobileAssetTag(mobileSearch, mobileAssetTag, username, password)
-
-def updateMobileDeviceInventory(mobileSearch, username, password):
-	print 'Issuing Update Inventory command for mobile device ' + mobileSearch + ' ...'
-	mobile_id = getMobileDeviceId(mobileSearch, username, password)
-	if str(mobile_id) == '-1':
-		print 'Mobile device ' + mobileSearch + ' not found, please try again.'
-		return -1
-	elif str(mobile_id) == '-2':
-		print 'More than one mobile device matching search string ' + str(mobileSearch) + ', please try again.'
-		return -1
-
-	#postStr = jss_api_base_url + '/mobiledevicecommands/command/UpdateInventory/id/' + mobile_id
-	postStr = jss_api_base_url + '/mobiledevicecommands/command/UpdateInventory'
-
-	postXML = "<mobile_device_command><command>UpdateInventory</command><mobile_devices><mobile_device><id>" + mobile_id + "</id></mobile_device></mobile_devices></mobile_device_command>"
-	#print postStr
-	#print postXML
-	#return
-
-	response = sendAPIRequest(postStr, username, password, 'POST', postXML)
-
-	if response == -1:
-		print 'Failed to issued update inventory command for device ' + mobileSearch
-		return -1
-	else:
-		print 'Successfully issued update inventory command for device ' + mobileSearch
-		return 1
-
-# Clear mobile device passcode for specified single mobile device
-def clearMobileDevicePasscode(mobileSearch, username, password):
-	print 'Issuing Clear Passcode command for mobile device ' + mobileSearch + ' ...'
-	mobile_id = getMobileDeviceId(mobileSearch, username, password)
-	if str(mobile_id) == '-1':
-		print 'Mobile device ' + mobileSearch + ' not found, please try again.'
-		return -1
-	elif str(mobile_id) == '-2':
-		print 'More than one mobile device matching search string ' + str(mobileSearch) + ', please try again.'
-		return -1
-
-	postStr = jss_api_base_url + '/mobiledevicecommands/command/ClearPasscode'
-
-	postXML = "<mobile_device_command><command>ClearPasscode</command><mobile_devices><mobile_device><id>" + mobile_id + "</id></mobile_device></mobile_devices></mobile_device_command>"
-
-	response = sendAPIRequest(postStr, username, password, 'POST', postXML)
-
-	if response == -1:
-		print 'Failed to issued clear passcode command for device ' + mobileSearch
-		return -1
-	else:
-		print 'Successfully issued clear passcode command for device ' + mobileSearch
-		return 1
-
-# Wipe a mobile device
-def wipeMobileDevice(mobileSearch, username, password, force):
-	print 'Mobile Device wipe requested, getting information for mobile device ' + mobileSearch + ' ...'
-
-	mobile_id = getMobileDeviceId(mobileSearch, username, password)
-	if str(mobile_id) == '-1':
-		print 'Mobile device ' + mobileSearch + ' not found, please try again.'
-		return -1
-	elif str(mobile_id) == '-2':
-		print 'More than one mobile device matching search string ' + str(mobileSearch) + ', please try again.'
-		return -1
-
-	if force == 'yes':
-		print "Wiping device %s without confirmation" % mobile_id
-		#return
-		wipeMobileDeviceNoConfirm(mobile_id, username, password)
-	else:
-
-		postStr = jss_api_base_url + '/mobiledevicecommands/command/EraseDevice'
-
-		postXML = "<mobile_device_command><command>EraseDevice</command><mobile_devices><mobile_device><id>" + mobile_id + "</id></mobile_device></mobile_devices></mobile_device_command>"
-
-		getMobileDeviceByID(mobile_id, username, password)
-
-		usrInput = raw_input('\nAre you sure you want to wipe the mobile device listed above? [y/n]: ')
-
-		if usrInput == 'y':
-			print 'Issuing erase device command for mobile device ' + mobileSearch + ' ...'
-			#return 1
-			response = sendAPIRequest(postStr, username, password, 'POST', postXML)
-
-			if response == -1:
-				print 'Failed to issue wipe command for device ' + mobileSearch
-				return -1
-			else:
-				print 'Successfully issued wipe command for device ' + mobileSearch
-				return 1
-		else:
-			print 'Aborting request to wipe mobile device...'
-			return -1
-
-def getMobileDevicesCSV(devicesCSV, username, password):
-	# CSV file with one column, search string
-
-	devicesDict = {}
-
-	with open (devicesCSV, 'rU') as csvfile:
-		devicesreader = csv.reader(csvfile, delimiter=',', quotechar='|')
-
-		# Skip the header row
-		next(devicesreader, None)
-
-		for row in devicesreader:
-			mobileSearch = row[0].replace('"', '').strip()
-			## for each search string, retrieve the device and add to devicesDict with device-name as the key, and serial, asset, and jss-id as a list
-			deviceInfo = getMobileDeviceInfo(mobileSearch, username, password)
-			#print deviceInfo
-			## check to make sure device exists
-			if deviceInfo == -1:
-				print 'Device ' + mobileSearch + ' not found, skipping...'
-				#   deviceInfo = {}
-				#   deviceInfo[]
-			else:
-				devicesDict.update(deviceInfo)
-
-	#print devicesDict
-
-	return devicesDict
-
-def printMobileDevicesCSV(devicesCSV, username, password):
-	devicesDict = getMobileDevicesCSV(devicesCSV, username, password)
-
-	if len(devicesDict) == 0:
-		print 'No devices found...'
-		return -1
-
-	print '\nDevice Name\tSerial Number\tAsset\tJSS ID'
-	print '===========\t=============\t=====\t======'
-	for (device, info) in devicesDict.items():
-		print "%s\t%s" % (device, '\t'.join(info))
-
-	return devicesDict
-
-def lockMobileDevicesCSV(devicesCSV, username, password):
-	devicesDict = getMobileDevicesCSV(devicesCSV, username, password)
-
-	for (device, info) in devicesDict.items():
-		#print "%s, %s" % (device, ', '.join(info))
-		print "Sending lock device command for device %s with JSS id %s" % (device, info[2])
-		lockMobileDevice(device, username, password)
-
-# Wipe Mobile Device with no confirmation, using mobile device jss id
-def wipeMobileDeviceNoConfirm(mobile_id, username, password):
-	postStr = jss_api_base_url + '/mobiledevicecommands/command/EraseDevice'
-
-	postXML = "<mobile_device_command><command>EraseDevice</command><mobile_devices><mobile_device><id>" + mobile_id + "</id></mobile_device></mobile_devices></mobile_device_command>"
-	print 'Issuing erase device command for mobile device id ' + mobile_id + ' ...'
-	response = sendAPIRequest(postStr, username, password, 'POST', postXML)
-
-def wipeMobileDevicesCSV(devicesCSV, username, password):
-	devicesDict = getMobileDevicesCSV(devicesCSV, username, password)
-
-	if len(devicesDict) == 0:
-		print 'No devices found to wipe, aborting...'
-		return -1
-	## Print confirmation message
-
-	print '\nDevice Name\tSerial Number\tAsset\tJSS ID'
-	print '===========\t=============\t=====\t======'
-	for (device, info) in devicesDict.items():
-		print "%s\t%s" % (device, '\t'.join(info))
-
-
-
-	sure = raw_input('\nAre you sure you want to send wipe commands to the above mobile devices? (y/n): ')
-
-	if sure == 'y':
-		for (device, info) in devicesDict.items():
-			#print "%s, %s" % (device, ', '.join(info))
-			jss_id = info[2]
-			print "Sending wipe device command for device %s with JSS id %s" % (device, jss_id)
-			wipeMobileDeviceNoConfirm(jss_id, username, password)
-	else:
-		print 'Aborting request to wipe mobile devices...'
-
-def getMobileDeviceInfo(mobileSearch, username, password):
-
-	## Get Device name for assetTag
-	mobileDeviceName_normalized = urllib2.quote(mobileSearch)
-	reqStr = jss_api_base_url + '/mobiledevices/match/' + mobileDeviceName_normalized
-
-	r = sendAPIRequest(reqStr, username, password, 'GET')
-
-	if r == -1:
-		return -1
-
-	#responseCode = r.code
-	baseXml = r.read()
-	#print baseXml
-	responseXml = etree.fromstring(baseXml)
-
-	response_size = responseXml.find('size').text
-
-	if response_size == '0':
-		#print 'Mobile Device not found, please search again.'
-		return -1
-	elif response_size == '1':
-		device_name = responseXml.find('mobile_device/name').text
-		device_id = responseXml.find('mobile_device/id').text
-		device_serial = responseXml.find('mobile_device/serial_number').text
-	else:
-		#print 'Too many results, narrow your search paramaters.'
-		return -2
-
-	device_asset_tag = getMobileDeviceAssetTag(device_id, username, password)
-
-	# Build a dict keyed off the device name containing serial number, asset tag, and jss id
-	deviceInfo = {}
-	deviceInfo[device_name] = [ device_serial, device_asset_tag, device_id]
-
-	return deviceInfo
-
-def getMobileDeviceAssetTag(device_id, username, password):
-	reqStr = jss_api_base_url + '/mobiledevices/id/' + device_id
-
-	#print reqStr
-
-	r = sendAPIRequest(reqStr, username, password, 'GET')
-
-	if r != -1:
-		baseXml = r.read()
-		#print baseXml
-		responseXml = etree.fromstring(baseXml)
-		general = responseXml.find('general')
-		asset_tag = general.find('asset_tag').text
-		return asset_tag
-	else:
-		return -1
-
-# Search for mobile device, if found AND supervised, return the mobile device JSS id, if not supervised, return -3.
-def getSupervisedMobileDeviceId(mobileDeviceName, username, password):
-	mobileDeviceName_normalized = urllib2.quote(mobileDeviceName)
-
-	mobile_device_id = getMobileDeviceId(mobileDeviceName, username, password)
-
-	if mobile_device_id == '-1' or mobile_device_id == '-2':
-		print 'Please refine your search.'
-		return -1
-	else:
-		reqStr = jss_api_base_url + '/mobiledevices/id/' + mobile_device_id
-		r = sendAPIRequest(reqStr, username, password, 'GET')
-		if r == -1:
-			return -1
-
-		#responseCode = r.code
-		baseXml = r.read()
-		#print baseXml
-		responseXml = etree.fromstring(baseXml)
-		#print prettify(responseXml)
-		#raise SystemExit
-
-		supervised = responseXml.find('general/supervised').text
-		if supervised == 'false':
-			return -3
-		else:
-			return mobile_device_id
-
-
-def updateMobileDeviceName(mobileSearch, deviceName, username, password):
-	print 'Updating Mobile Device name for mobile device ' + mobileSearch + ' to ' + deviceName + '...'
-	newDeviceName_normalized = urllib2.quote(deviceName)
-
-	mobile_id = getSupervisedMobileDeviceId(mobileSearch, username, password)
-	if str(mobile_id) == '-1':
-		print 'Mobile device ' + mobileSearch + ' not found, please try again.'
-		return -1
-	elif str(mobile_id) == '-2':
-		print 'More than one mobile device matching search string ' + str(mobileSearch) + ', please try again.'
-		return -1
-	elif str(mobile_id) == '-3':
-		print 'Device found, but is not supervised.'
-
-	postStr = jss_api_base_url + '/mobiledevicecommands/command/DeviceName/' + newDeviceName_normalized + '/id/' + mobile_id
-	postXML = "<mobile_device_command><command>DeviceName</command><mobile_devices><mobile_device><id>" + mobile_id + "</id><device_name>" + deviceName + "</device_name></mobile_device></mobile_devices></mobile_device_command>"
-
-def lockMobileDevice(mobileSearch, username, password):
-	print 'Searching for mobile device ' + mobileSearch + '...'
-	mobile_id = getMobileDeviceId(mobileSearch, username, password)
-	if str(mobile_id) == '-1':
-		print 'Mobile device ' + mobileSearch + ' not found, please try again.'
-		return -1
-	elif str(mobile_id) == '-2':
-		print 'More than one mobile device matching search string ' + str(mobileSearch) + ', please try again.'
-		return -1
-
-	postStr = jss_api_base_url + '/mobiledevicecommands/command/DeviceLock'
-	postXML = "<mobile_device_command><command>DeviceLock</command><mobile_devices><mobile_device><id>" + mobile_id + "</id></mobile_device></mobile_devices></mobile_device_command>"
-	#print postStr
-	#print postXML
-	#return
-
-	getMobileDeviceByID(mobile_id, username, password)
-
-	usrInput = raw_input('\nAre you sure you want to lock the mobile device listed above? [y/n]: ')
-	if usrInput == 'y':
-		print 'Issuing remote lock command...'
-		#return 1
-		response = sendAPIRequest(postStr, username, password, 'POST', postXML)
-
-		if response == -1:
-			print 'Failed to issue lock command for device ' + mobileSearch
-			return -1
-		else:
-			print 'Successfully issued lock command for device ' + mobileSearch
-			return 1
-	else:
-		print 'Aborting request to lock mobile device...'
-		return -1
-
-
 def cleanupOutput(inputString):
 	#print str(inputString)
 	return inputString.replace(u"\u2018", "'").replace(u"\u2019", "'").replace(u"\u201c", "\"").replace(u"\u201d", "\"")
 
+
 def getSerialNumber():
 	print 'test'
-
-
-def updateMobileDeviceUserInfo(mobile_id, username, real_name, email_address, position, phone, department, building, room, overwrite, jssuser, jsspassword):
-
-
-	putStr = jss_api_base_url + '/mobiledevices/id/' + mobile_id
-	if overwrite == 'y':
-		print 'Overwriting all existing user and location info for mobile device ID ' + mobile_id + ' with the following:\n' + '\n  Username: ' + username + '\n  Full Name: ' + real_name + '\n  Email: ' + email_address + '\n  Position: ' + position + '\n  Phone: ' + str(phone) + '\n  Department: ' + department + '\n  Building: ' + building + '\n  Room: ' + room + '\n'
-		putXML = "<mobile_device><location><username>" + username + "</username><real_name>" + real_name + "</real_name><email_address>" + email_address + "</email_address><position>" + position + "</position><phone>" + str(phone) + "</phone><department>" + department + "</department><building>" + building + "</building><room>" + room + "</room></location></mobile_device>"
-	else:
-		updateStr = 'Updating user and location info for mobile device id ID ' + mobile_id + ' with the following:\n'
-		putXML = "<mobile_device><location>"
-		updateCount = 0
-
-		if username != '':
-			putXML += '<username>' + username + '</username>'
-			updateStr += '\n  Username : ' + username
-			updateCount += 1
-
-		if real_name != '':
-			putXML += '<real_name>' + real_name + '</real_name>'
-			updateStr += '\n Full Name: ' + real_name
-			updateCount += 1
-
-		if email_address != '':
-			putXML += '<email_address>' + email_address + '</email_address>'
-			updateStr += '\n  Email: ' + email_address
-			updateCount += 1
-
-		if position != '':
-			putXML += '<position>' + position + '</position>'
-			updateStr += '\n  Position: ' + position
-			updateCount += 1
-
-		if phone != '':
-			putXML += '<phone>' + str(phone) + '</phone>'
-			updateStr += '\n  Phone: ' + str(phone)
-			updateCount += 1
-
-		if department != '':
-			putXML += '<department>' + department + '</department>'
-			updateStr += '\n  Department: ' + department
-			updateCount += 1
-
-		if building != '':
-			putXML += '<building>' + building + '</building>'
-			updateStr += '\n  Building: ' + building
-			updateCount += 1
-
-		if room != '':
-			putXML += '<room>' + room + '</room>'
-			updateStr += '\n  Room: ' + room
-			updateCount += 1
-
-		putXML += "</location></mobile_device>"
-
-		if updateCount == 0:
-			# Nothing to update
-			print "Nothing to update."
-			return
-
-
-	#print putXML
-	response = sendAPIRequest(putStr, jssuser, jsspassword, 'PUT', putXML)
-
-	if response == -1:
-		print 'Failed to update user and location info for mobile device ' + mobile_id + ', see error above.'
-		return
-	else:
-		print 'Successfully updated user and location info for mobile device ' + mobile_id + '.'
-
-
-
-def updateMobileDeviceUserInfoFromCSV(mobiledevicesCSV, username, password):
-
-	# CSV File with 9 columns: JSS Mobile Device ID, Username, Full Name, Email, Position, Phone, Department, Building, Room, Overwrite
-
-	with open (mobiledevicesCSV, 'rU') as csvfile:
-		mobiledevicesreader = csv.reader(csvfile, delimiter=',', quotechar='|')
-
-		#Skip the header row
-		next(mobiledevicesreader, None)
-
-		for row in mobiledevicesreader:
-			mobileDeviceID = row[0].replace('"', '').strip()
-			uName = row[1].replace('"', '').strip()
-			fullName = row[2].replace('"', '').strip()
-			email = row[3].replace('"', '').strip()
-			position = row[4].replace('"', '').strip()
-			phone = row[5].replace('"', '').strip()
-			department = row[6].replace('"', '').strip()
-			building = row[7].replace('"', '').strip()
-			room = row[8].replace('"', '').strip()
-			overwrite = row[9].replace('"', '').strip()
-
-			print 'Update mobile device user info with ' + 'JSS ID: ' + mobileDeviceID + ' Username: ' + uName + ' Full Name: ' + fullName + ' Email: ' + email + ' Position: ' + position + ' Phone: ' + str(phone) + ' Dept: ' + department + 'Bldg: ' + building + ' Room: ' + room + ' Overwrite: ' + overwrite
-			updateMobileDeviceUserInfo(mobileDeviceID, uName, fullName, email, position, phone, department, building, room, overwrite, username, password)
-	return
-
 
 
 def getComputerCommands(username, password):
@@ -1031,6 +312,7 @@ def getComputerCommands(username, password):
 	#responseXml = etree.fromstring(r.read())
 	#print prettify(responseXml)
 	#print etree.tostring(responseXml)
+
 
 def getJSSUsername():
 	scriptPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
@@ -1056,6 +338,7 @@ def getJSSUsername():
 			print "\nCtrl-C detected, exiting..."
 			raise SystemExit
 
+
 def getJSSPassword():
 	## This method supports a plaintext password stored in the file .jsspassword existing in the same directory
 	scriptPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
@@ -1080,6 +363,7 @@ def getJSSPassword():
 		except:
 			print "\nCtrl-C detected, exiting..."
 			raise SystemExit
+
 
 def main():
 
@@ -1304,10 +588,10 @@ def main():
 	elif APIcommand == 'addmobiledevicetogroup':
 		mobileSearch = args.mobileSearch
 		mobileGroupSearch = args.mobileGroupSearch
-		addMobileDeviceToGroup(mobileSearch, mobileGroupSearch, user, password)
+		mobiledevicegroups.addMobileDeviceToGroup(mobileSearch, mobileGroupSearch, user, password)
 	elif APIcommand == 'clearmobiledevicepasscode':
 		mobileSearch = args.mobileSearch
-		clearMobileDevicePasscode(mobileSearch, user, password)
+		mobiledevices.clearMobileDevicePasscode(mobileSearch, user, password)
 	elif APIcommand == 'deletecomputerbyid':
 		computerID = args.computerID
 		computer_lifecycle.deleteComputerByID(computerID, user, password)
@@ -1319,7 +603,7 @@ def main():
 		mobiledevice_lifecycle.deleteMobileDeviceByID(mobiledeviceID, user, password)
 	elif APIcommand == 'findmobiledeviceid':
 		searchString = args.searchString
-		findMobileDeviceId(searchString, user, password)
+		mobiledevice_core.findMobileDeviceId(searchString, user, password)
 	elif APIcommand == 'getcomputer':
 		compSearch = args.compsearch
 		detail = args.detail
@@ -1342,10 +626,10 @@ def main():
 		mobiledevice_core.getMobileDeviceByID(mobileDeviceID, user, password)
 	elif APIcommand == 'getmobiledevicegroup':
 		mobileDeviceGroup = args.mobilegroupsearch
-		getMobileDeviceGroup(mobileDeviceGroup, user, password)
+		mobiledevicegroups.getMobileDeviceGroup(mobileDeviceGroup, user, password)
 	elif APIcommand == 'getmobiledevicescsv':
 		mobileDevicesCSV = args.csvfile
-		printMobileDevicesCSV(mobileDevicesCSV, user, password)
+		mobiledevice_core.printMobileDevicesCSV(mobileDevicesCSV, user, password)
 	elif APIcommand == 'getallcomputergroups':
 		computergroups.getAllComputerGroups(user, password)
 	elif APIcommand == 'getallpolicies':
@@ -1362,10 +646,10 @@ def main():
 		policies_extended.getPoliciesScopedtoGroup(groupid, user, password)
 	elif APIcommand == 'lockmobiledevice':
 		mobileSearch = args.mobileSearch
-		lockMobileDevice(mobileSearch, user, password)
+		mobiledevice_lifecycle.lockMobileDevice(mobileSearch, user, password)
 	elif APIcommand == 'lockmobiledevicescsv':
 		mobileDevicesCSV = args.csvfile
-		lockMobileDevicesCSV(mobileDevicesCSV, user, password)
+		mobiledevice_lifecycle.lockMobileDevicesCSV(mobileDevicesCSV, user, password)
 	elif APIcommand == 'removecomputerfromgroup':
 		computerSearch = args.computerSearch
 		computerGroupSearch = args.computerGroupSearch
@@ -1373,7 +657,7 @@ def main():
 	elif APIcommand == 'removemobiledevicefromgroup':
 		mobileSearch = args.mobileSearch
 		mobileGroupSearch = args.mobileGroupSearch
-		removeMobileDeviceFromGroup(mobileSearch, mobileGroupSearch, user, password)
+		mobiledevicegroups.removeMobileDeviceFromGroup(mobileSearch, mobileGroupSearch, user, password)
 	elif APIcommand == "unmanagecomputer":
 		computerID = args.computerID
 		computer_lifecycle.unmanageComputer(computerID, user, password)
@@ -1402,14 +686,14 @@ def main():
 	elif APIcommand == 'updatemobileassettag':
 		mobileSearch = args.mobileSearch
 		assetTag = args.assetTag
-		mobiledevice_core.updateMobileAssetTag(mobileSearch, assetTag, user, password)
+		mobiledevices.updateMobileAssetTag(mobileSearch, assetTag, user, password)
 	elif APIcommand == 'updatemobileassettagcsv':
 		csvfile = args.csvfile
-		updateMobileAssetTagsCSV(csvfile, user, password)
+		mobiledevices.updateMobileAssetTagsCSV(csvfile, user, password)
 	elif APIcommand == 'updatemobiledevicename':
 		mobileSearch = args.mobileSearch
 		deviceName = args.deviceName
-		updateMobileDeviceName(mobileSearch, deviceName, user, password)
+		mobiledevices.updateMobileDeviceName(mobileSearch, deviceName, user, password)
 	elif APIcommand == 'updatemobiledeviceuserinfo':
 		mobileDeviceID = args.mobileDeviceID
 		username = args.username
@@ -1421,20 +705,20 @@ def main():
 		building = args.building
 		room = args.room
 		overwrite = args.overwrite
-		updateMobileDeviceUserInfo(mobileDeviceID, username, real_name, email_address, position, phone, department, building, room, overwrite, user, password)
+		mobiledevices.updateMobileDeviceUserInfo(mobileDeviceID, username, real_name, email_address, position, phone, department, building, room, overwrite, user, password)
 	elif APIcommand == 'updatemobiledeviceuserinfofromcsv':
 		mobileDevicesCSV = args.csvfile
-		updateMobileDeviceUserInfoFromCSV(mobileDevicesCSV, user, password)
+		mobiledevices.updateMobileDeviceUserInfoFromCSV(mobileDevicesCSV, user, password)
 	elif APIcommand == 'updatemobiledeviceinventory':
 		mobileSearch = args.mobileSearch
-		updateMobileDeviceInventory(mobileSearch, user, password)
+		mobiledevices.updateMobileDeviceInventory(mobileSearch, user, password)
 	elif APIcommand == 'wipemobiledevice':
 		mobileSearch = args.mobileSearch
 		force = args.force
-		wipeMobileDevice(mobileSearch, user, password, force)
+		mobiledevice_lifecycle.wipeMobileDevice(mobileSearch, user, password, force)
 	elif APIcommand == 'wipemobiledevicescsv':
 		mobileDevicesCSV = args.csvfile
-		wipeMobileDevicesCSV(mobileDevicesCSV, user, password)
+		mobiledevice_lifecycle.wipeMobileDevicesCSV(mobileDevicesCSV, user, password)
 	else:
 		print 'Unknown command.'
 

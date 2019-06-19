@@ -5,7 +5,7 @@ import csv
 from csv import writer, DictWriter
 from utilities import jamfconfig
 from utilities import apirequests
-from computers import computer_core
+import computer_core
 from computergroups import computergroups
 import xml.etree.ElementTree as etree
 

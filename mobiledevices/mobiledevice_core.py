@@ -1,5 +1,7 @@
 import sys
 sys.path.append('..')
+import csv
+from csv import writer, DictWriter
 from utilities import jamfconfig
 from utilities import apirequests
 import xml.etree.ElementTree as etree
@@ -7,8 +9,46 @@ import urllib2
 
 jss_api_base_url = jamfconfig.getJSS_API_URL()
 
+def findMobileDeviceId(searchString, username, password):
+	#print 'Searching for mobile device with string ' + searchString
+	print "Running refactored findMobileDeviceId...\n"
+	searchString_normalized = urllib2.quote(searchString)
+
+	reqStr = jss_api_base_url + '/mobiledevices/match/' + searchString_normalized
+	#print reqStr
+	r = apirequests.sendAPIRequest(reqStr, username, password, 'GET')
+
+	if r != -1:
+		responseCode = r.code
+		baseXml = r.read()
+		responseXml = etree.fromstring(baseXml)
+		#print prettify(responseXml)
+		#return
+
+		#mobiledevicemembers = responseXml.find('mobile_devices')
+		#print mobiledevicemembers
+		#return
+		result_size = responseXml.find('size').text
+		#print 'hello' + str(result_size)
+
+		if result_size == '0':
+			print 'No matches found.'
+			return -1
+		elif result_size == '1':
+			#print 'Single match found'
+			mobile_device_id = responseXml.find('mobile_device/id').text
+			print mobile_device_id
+			return mobile_device_id
+			#print prettify(responseXml)
+		else:
+			print 'Multiple matches found, please narrow your search.'
+			return -1
+	else:
+		print 'Error'
+
+
 def getMobileDevice(mobileDeviceName, username, password, detail):
-	print("Running refactored getMobileDevice...")
+	print "Running refactored getMobileDevice...\n"
 
 	mobileDeviceName_normalized = urllib2.quote(mobileDeviceName)
 	reqStr = jss_api_base_url + '/mobiledevices/match/' + mobileDeviceName_normalized
@@ -43,32 +83,37 @@ def getMobileDevice(mobileDeviceName, username, password, detail):
 
 ## Get single mobile device Id. If no results, return -1, if more than one result, return -2, if exactly one result, return mobile device id.
 def getMobileDeviceId(mobileDeviceName, username, password):
-	print("Running refactored getMobileDeviceByID...")
-	mobileDeviceName_normalized = urllib2.quote(mobileDeviceName)
-	reqStr = jss_api_base_url + '/mobiledevices/match/' + mobileDeviceName_normalized
+	print "Running refactored getMobileDeviceByID...\n"
+	try:
+		mobileDeviceName_normalized = urllib2.quote(mobileDeviceName)
+		reqStr = jss_api_base_url + '/mobiledevices/match/' + mobileDeviceName_normalized
 
-	r = apirequests.sendAPIRequest(reqStr, username, password, 'GET')
+		r = apirequests.sendAPIRequest(reqStr, username, password, 'GET')
 
-	if r == -1:
-		return -1
+		if r == -1:
+			return -1
 
-	#responseCode = r.code
-	baseXml = r.read()
-	#print baseXml
-	responseXml = etree.fromstring(baseXml)
+		#responseCode = r.code
+		baseXml = r.read()
+		#print baseXml
+		responseXml = etree.fromstring(baseXml)
 
-	response_size = responseXml.find('size').text
+		response_size = responseXml.find('size').text
 
-	if response_size == '0':
-		#print 'Mobile Device not found, please search again.'
-		return -1
-	elif response_size == '1':
-		return responseXml.find('mobile_device/id').text
-	else:
-		#print 'Too many results, narrow your search paramaters.'
-		return -2
+		if response_size == '0':
+			#print 'Mobile Device not found, please search again.'
+			return -1
+		elif response_size == '1':
+			return responseXml.find('mobile_device/id').text
+		else:
+			#print 'Too many results, narrow your search paramaters.'
+			return -2
+	except KeyError as error:
+		print 'Problem parsing device name. Possibly an invalid character'
+		print error
 
 def getMobileDeviceByID(mobileID, username, password):
+	print "Running refactored getMobileDeviceByID...\n"
 	print "Getting mobile device with JSS ID " + mobileID + "..."
 	reqStr = jss_api_base_url + '/mobiledevices/id/' + mobileID
 
@@ -153,24 +198,140 @@ def getMobileDeviceByID(mobileID, username, password):
 		print 'Failed to find mobile device with JSS ID ' + mobileID
 
 
-def updateMobileAssetTag(mobileSearch, asset_tag, username, password):
-	print 'Updating asset tag for mobile device ' + mobileSearch + ' with asset tag ' + asset_tag + '...'
-	mobile_id = getMobileDeviceId(mobileSearch, username, password)
-	if str(mobile_id) == '-1':
-		print 'Mobile device ' + mobileSearch + ' not found, please try again.'
-		return
-	elif str(mobile_id) == '-2':
-		print 'More than one mobile device matching search string ' + str(mobileSearch) + ', please try again.'
-		return
+def getMobileDevicesCSV(devicesCSV, username, password):
+	print "Running refactored getMobileDevicesCSV...\n"
+	# CSV file with one column, search string
 
-	putStr = jss_api_base_url + '/mobiledevices/id/' + mobile_id
-	#print putStr
+	devicesDict = {}
 
-	putXML = "<mobile_device><general><asset_tag>" + asset_tag + "</asset_tag></general></mobile_device>"
-	response = apirequests.sendAPIRequest(putStr, username, password, 'PUT', putXML)
+	with open (devicesCSV, 'rU') as csvfile:
+		devicesreader = csv.reader(csvfile, delimiter=',', quotechar='|')
 
-	if response == -1:
-		print 'Failed to update asset tag for mobile device ' + mobileSearch + ', see error above.'
-		return
+		# Skip the header row
+		next(devicesreader, None)
+
+		for row in devicesreader:
+			mobileSearch = row[0].replace('"', '').strip()
+			## for each search string, retrieve the device and add to devicesDict with device-name as the key, and serial, asset, and jss-id as a list
+			deviceInfo = getMobileDeviceInfo(mobileSearch, username, password)
+			#print deviceInfo
+			## check to make sure device exists
+			if deviceInfo == -1:
+				print 'Device ' + mobileSearch + ' not found, skipping...'
+				#   deviceInfo = {}
+				#   deviceInfo[]
+			else:
+				devicesDict.update(deviceInfo)
+
+	# print devicesDict
+
+	return devicesDict
+
+def printMobileDevicesCSV(devicesCSV, username, password):
+	print "Running refactored printMobileDevicesCSV...\n"
+	devicesDict = getMobileDevicesCSV(devicesCSV, username, password)
+
+	if len(devicesDict) == 0:
+		print 'No devices found...'
+		return -1
+
+	print '\nDevice Name\tSerial Number\tAsset\tJSS ID'
+	print '===========\t=============\t=====\t======'
+	for (device, info) in devicesDict.items():
+		# print info
+		try:
+			print "%s\t%s" % (device, '\t'.join(info))
+		except TypeError as error:
+			print device + ' has an empty field which can\'t be displayed: ' + str(error)
+
+	return devicesDict
+
+
+def getMobileDeviceInfo(mobileSearch, username, password):
+	print "Running refactored getMobileDeviceInfo...\n"
+
+	## Get Device name for assetTag
+	mobileDeviceName_normalized = urllib2.quote(mobileSearch)
+	reqStr = jss_api_base_url + '/mobiledevices/match/' + mobileDeviceName_normalized
+
+	r = apirequests.sendAPIRequest(reqStr, username, password, 'GET')
+
+	if r == -1:
+		return -1
+
+	#responseCode = r.code
+	baseXml = r.read()
+	#print baseXml
+	responseXml = etree.fromstring(baseXml)
+
+	response_size = responseXml.find('size').text
+
+	if response_size == '0':
+		#print 'Mobile Device not found, please search again.'
+		return -1
+	elif response_size == '1':
+		device_name = responseXml.find('mobile_device/name').text
+		device_id = responseXml.find('mobile_device/id').text
+		device_serial = responseXml.find('mobile_device/serial_number').text
 	else:
-		print 'Successfully updated asset tag for mobile device ' + mobileSearch + '.'
+		#print 'Too many results, narrow your search paramaters.'
+		return -2
+
+	device_asset_tag = getMobileDeviceAssetTag(device_id, username, password)
+
+	# Build a dict keyed off the device name containing serial number, asset tag, and jss id
+	deviceInfo = {}
+	deviceInfo[device_name] = [ device_serial, device_asset_tag, device_id]
+
+	return deviceInfo
+
+
+def getMobileDeviceAssetTag(device_id, username, password):
+	print "Running refactored getMobileDeviceAssetTag...\n"
+	reqStr = jss_api_base_url + '/mobiledevices/id/' + device_id
+
+	#print reqStr
+
+	r = apirequests.sendAPIRequest(reqStr, username, password, 'GET')
+
+	if r != -1:
+		baseXml = r.read()
+		#print baseXml
+		responseXml = etree.fromstring(baseXml)
+		general = responseXml.find('general')
+		asset_tag = general.find('asset_tag').text
+		if asset_tag == None:
+			asset_tag = 'None'
+		# print 'asset tag is {}: '.format(asset_tag)
+		return asset_tag
+	else:
+		return -1
+
+# Search for mobile device, if found AND supervised, return the mobile device JSS id, if not supervised, return -3.
+def getSupervisedMobileDeviceId(mobileDeviceName, username, password):
+	print "Running refactored getSupervisedMobileDeviceId...\n"
+	mobileDeviceName_normalized = urllib2.quote(mobileDeviceName)
+
+	mobile_device_id = getMobileDeviceId(mobileDeviceName, username, password)
+
+	if mobile_device_id == '-1' or mobile_device_id == '-2':
+		print 'Please refine your search.'
+		return -1
+	else:
+		reqStr = jss_api_base_url + '/mobiledevices/id/' + mobile_device_id
+		r = apirequests.sendAPIRequest(reqStr, username, password, 'GET')
+		if r == -1:
+			return -1
+
+		#responseCode = r.code
+		baseXml = r.read()
+		#print baseXml
+		responseXml = etree.fromstring(baseXml)
+		#print prettify(responseXml)
+		#raise SystemExit
+
+		supervised = responseXml.find('general/supervised').text
+		if supervised == 'false':
+			return -3
+		else:
+			return mobile_device_id
