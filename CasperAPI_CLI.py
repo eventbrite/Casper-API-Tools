@@ -39,6 +39,7 @@ import subprocess
 from policies import policies_core
 from policies import policies_extended
 from computers import computer_core
+from computers import computer_ea
 from computers import computer_lifecycle
 from computergroups import computergroups
 from mobiledevices import mobiledevices
@@ -425,6 +426,9 @@ def main():
 	parser_getcomputerbyid = subparsers.add_parser('getcomputerbyid', help='Get computer by ID')
 	parser_getcomputerbyid.set_defaults(cmd='getcomputerbyid')
 	parser_getcomputerbyid.add_argument('computerID', help=unmanageComputerHelp)
+	parser_getcomputerextensionattributes = subparsers.add_parser('getcomputerextensionattributes', help='Get computer Extension Attributes by ID')
+	parser_getcomputerextensionattributes.set_defaults(cmd='getcomputerextensionattributes')
+	parser_getcomputerextensionattributes.add_argument('computerID', help='Get computer Extension Attributes by JSS ID')
 
 	parser_getcomputergroupid = subparsers.add_parser('getcomputergroupid', help='Get computer group JSS ID')
 	parser_getcomputergroupid.set_defaults(cmd='getcomputergroupid')
@@ -614,6 +618,9 @@ def main():
 	elif APIcommand == 'getcomputergroupid':
 		groupSearch = args.groupsearch
 		computergroups.getComputerGroupId(groupSearch, user, password)
+	elif APIcommand == 'getcomputerextensionattributes':
+		computerID = args.computerID
+		computer_ea.getCompEAsbyCompID(computerID, user, password)
 	elif APIcommand == 'getcomputergroupmembers':
 		groupSearch = args.groupsearch
 		computergroups.getComputerGroupMembers(groupSearch, user, password)
