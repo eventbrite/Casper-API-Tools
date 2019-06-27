@@ -12,7 +12,8 @@ import xml.etree.ElementTree as etree
 jss_api_base_url = jamfconfig.getJSS_API_URL()
 
 def getCompEAsbyCompID(compID, username, password):
-    ''' List all Extension Attributes for computer in JSS to screen '''
+    ''' List all Extension Attributes for computer in JSS to screen -
+    including Extension Attribute's ID value for reference and additional lookup '''
 
     print "We're Refactored!  Getting All Computer Extension Attributes..."
     reqStr = jss_api_base_url + '/computers/id/' + compID
@@ -30,10 +31,11 @@ def getCompEAsbyCompID(compID, username, password):
     print '\nEXTENSION ATTRIBUTES:'
 
     for ea in extension_attributes.findall('extension_attribute'):
+        eaID = ea.find('id').text
         eaName = ea.find('name').text
         eaValue = ea.find('value').text
-        eaPair = str(eaName) + ': ' + str(eaValue)
-        eas += [ eaPair ]
+        eaInfo = '(EA ID:  ' + str(eaID) + ') --- ' + str(eaName) + ': ' + str(eaValue)
+        eas += [ eaInfo ]
 
     print '\n'.join (sorted (eas))
 
