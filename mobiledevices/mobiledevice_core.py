@@ -9,6 +9,42 @@ import urllib2
 
 jss_api_base_url = jamfconfig.getJSS_API_URL()
 
+
+def getMobileDevice(mobileDeviceName, username, password, detail):
+	print "Running refactored getMobileDevice...\n"
+
+	mobileDeviceName_normalized = urllib2.quote(mobileDeviceName)
+	reqStr = jss_api_base_url + '/mobiledevices/match/' + mobileDeviceName_normalized
+	#print reqStr
+	#print detail
+
+	r = apirequests.sendAPIRequest(reqStr, username, password, 'GET')
+
+	if r == -1:
+		return
+
+	#responseCode = r.code
+	baseXml = r.read()
+	#print baseXml
+	responseXml = etree.fromstring(baseXml)
+
+	print 'All mobile devices with ' + mobileDeviceName + ' as part of the device information:\n'
+
+	for mobile_device in responseXml.findall('mobile_device'):
+		name = mobile_device.find('name').text
+		sn = mobile_device.find('serial_number').text
+		mac_addr = mobile_device.find('mac_address').text
+		jssID = mobile_device.find('id').text
+
+		if detail == 'yes':
+			getMobileDeviceByID(jssID, username, password)
+		else:
+			print 'Mobile Device Name: ' + name
+			print 'Serial Number: ' + sn
+			print 'Mac Address: ' + str(mac_addr)
+			print 'JSS Mobile Device ID: ' + jssID + '\n'
+
+
 def findMobileDeviceId(searchString, username, password):
 	#print 'Searching for mobile device with string ' + searchString
 	print "Running refactored findMobileDeviceId...\n"
@@ -47,39 +83,6 @@ def findMobileDeviceId(searchString, username, password):
 		print 'Error'
 
 
-def getMobileDevice(mobileDeviceName, username, password, detail):
-	print "Running refactored getMobileDevice...\n"
-
-	mobileDeviceName_normalized = urllib2.quote(mobileDeviceName)
-	reqStr = jss_api_base_url + '/mobiledevices/match/' + mobileDeviceName_normalized
-	#print reqStr
-	#print detail
-
-	r = apirequests.sendAPIRequest(reqStr, username, password, 'GET')
-
-	if r == -1:
-		return
-
-	#responseCode = r.code
-	baseXml = r.read()
-	#print baseXml
-	responseXml = etree.fromstring(baseXml)
-
-	print 'All mobile devices with ' + mobileDeviceName + ' as part of the device information:\n'
-
-	for mobile_device in responseXml.findall('mobile_device'):
-		name = mobile_device.find('name').text
-		sn = mobile_device.find('serial_number').text
-		mac_addr = mobile_device.find('mac_address').text
-		jssID = mobile_device.find('id').text
-
-		if detail == 'yes':
-			getMobileDeviceByID(jssID, username, password)
-		else:
-			print 'Mobile Device Name: ' + name
-			print 'Serial Number: ' + sn
-			print 'Mac Address: ' + str(mac_addr)
-			print 'JSS Mobile Device ID: ' + jssID + '\n'
 
 ## Get single mobile device Id. If no results, return -1, if more than one result, return -2, if exactly one result, return mobile device id.
 def getMobileDeviceId(mobileDeviceName, username, password):

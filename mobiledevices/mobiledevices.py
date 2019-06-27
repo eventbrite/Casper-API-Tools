@@ -12,6 +12,7 @@ jss_api_base_url = jamfconfig.getJSS_API_URL()
 
 
 def clearMobileDevicePasscode(mobileSearch, username, password):
+    print "Running refactored clearMobileDevicePasscode...\n"
     print 'Issuing Clear Passcode command for mobile device ' + mobileSearch + ' ...'
     mobile_id = mobiledevice_core.getMobileDeviceId(mobileSearch, username, password)
     if str(mobile_id) == '-1':
