@@ -426,9 +426,20 @@ def main():
 	parser_getcomputerbyid = subparsers.add_parser('getcomputerbyid', help='Get computer by ID')
 	parser_getcomputerbyid.set_defaults(cmd='getcomputerbyid')
 	parser_getcomputerbyid.add_argument('computerID', help=unmanageComputerHelp)
-	parser_getcomputerextensionattributes = subparsers.add_parser('getcomputerextensionattributes', help='Get computer Extension Attributes by ID')
-	parser_getcomputerextensionattributes.set_defaults(cmd='getcomputerextensionattributes')
-	parser_getcomputerextensionattributes.add_argument('computerID', help='Get computer Extension Attributes by JSS ID')
+
+	parser_getcomputereas = subparsers.add_parser('getcomputereas', help='Get Computer Extension Attributes by Computer JSS ID')
+	parser_getcomputereas.set_defaults(cmd='getcomputereas')
+	parser_getcomputereas.add_argument('computerID', help='Provide a Computer JSS ID')
+
+	parser_getcomputereabyid = subparsers.add_parser('getcomputereabyid', help='Get Computer Extension Attribute by computer ID and EA ID')
+	parser_getcomputereabyid.set_defaults(cmd='getcomputereabyid')
+	parser_getcomputereabyid.add_argument('computerID', help='Provide the Computer JSS ID')
+	parser_getcomputereabyid.add_argument('extattribID', help='Provide the Extension Attribute JSS ID')
+
+	parser_getcomputereabyname = subparsers.add_parser('getcomputereabyname', help='Get Computer Extension Attribute by Computer ID and EA Search String')
+	parser_getcomputereabyname.set_defaults(cmd='getcomputereabyname')
+	parser_getcomputereabyname.add_argument('computerID', help='Provide the Computer JSS ID')
+	parser_getcomputereabyname.add_argument('searchStr', help='Provide a Search String for the Extension Attribute name - enclose phrases in quotes')
 
 	parser_getcomputergroupid = subparsers.add_parser('getcomputergroupid', help='Get computer group JSS ID')
 	parser_getcomputergroupid.set_defaults(cmd='getcomputergroupid')
@@ -618,9 +629,17 @@ def main():
 	elif APIcommand == 'getcomputergroupid':
 		groupSearch = args.groupsearch
 		computergroups.getComputerGroupId(groupSearch, user, password)
-	elif APIcommand == 'getcomputerextensionattributes':
+	elif APIcommand == 'getcomputereas':
 		computerID = args.computerID
 		computer_ea.getCompEAsbyCompID(computerID, user, password)
+	elif APIcommand == 'getcomputereabyid':
+		computerID = args.computerID
+		extattribID = args.extattribID
+		computer_ea.getCompEAbyEAID(computerID, extattribID, user, password)
+	elif APIcommand == 'getcomputereabyname':
+		computerID = args.computerID
+		searchStr = args.searchStr
+		computer_ea.getCompEAbyEAname(computerID, searchStr, user, password)
 	elif APIcommand == 'getcomputergroupmembers':
 		groupSearch = args.groupsearch
 		computergroups.getComputerGroupMembers(groupSearch, user, password)
