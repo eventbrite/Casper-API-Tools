@@ -72,6 +72,31 @@ def getCompEAbyEAID(compID, extattribID, username, password):
                 print 'Extension Attribute with ID: {} not found in JSS.  Check the Extension Attribute ID again.\n'.format(extattribID)
 
 
+def listCompEAbyEAID(compID, extattribID, username, password):
+    ''' Returns specific details for an Extension Attribute based upon that computer's
+    JSS ID and the EA's JSS ID as arguments - for use within other functions '''
+
+    reqStr = jss_api_base_url + '/computers/id/' + compID
+
+    r = apirequests.sendAPIRequest(reqStr, username, password, 'GET')
+
+    if r == -1:
+        return
+
+    baseXml = r.read()
+    responseXml = etree.fromstring(baseXml)
+    extension_attributes = responseXml.find('extension_attributes')
+
+    for ea in extension_attributes.findall('extension_attribute'):
+        eaID = ea.find('id').text
+        eaName = ea.find('name').text
+        eaValue = ea.find('value').text
+        # print eaID
+        if eaID == extattribID:
+            eaInfo = 'EA ID:  ' + str(eaID) + ' --- ' + str(eaName) + ': ' + str(eaValue)
+            print eaInfo + '\n'
+
+
 def getCompEAbyEAname(compID, searchStr, username, password):
     ''' Returns specific details for an Extension Attribute based upon that computer's
     JSS ID and the EA's JSS ID as arguments '''
@@ -160,7 +185,7 @@ def updateEAbysearchStr(compID, searchStr, newValue, username, password):
         chooseID = raw_input('\nEnter the ID of the EA you wish to update:  ')
         updateEAbyID(compID, chooseID, newValue, username, password)
         print '\nThe Following Changes were made:  \n'
-        getCompEAbyEAID(compID, chooseID, username, password)
+        listCompEAbyEAID(compID, chooseID, username, password)
 
     else:
         print 'An extension attribute containing the Search String not found.  Try another search string.'
