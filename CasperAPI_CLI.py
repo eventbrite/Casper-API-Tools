@@ -394,6 +394,11 @@ def main():
 	parser_addcomputertogroup.add_argument('computerSearch', help='Computer to add')
 	parser_addcomputertogroup.add_argument('computerGroupSearch', help='Computer group to add computer to')
 
+	parser_addcompstogroupfromcsv = subparsers.add_parser('addcompstogroupfromcsv', help='Add computers to group from provided csv file')
+	parser_addcompstogroupfromcsv.set_defaults(cmd='addcompstogroupfromcsv')
+	parser_addcompstogroupfromcsv.add_argument('compsCSV', help='Full file path to csv file containing one column of JSS IDs')
+	parser_addcompstogroupfromcsv.add_argument('computerGroupSearch', help='Computer group to add computer to')
+
 	parser_addmobiledevicetogroup = subparsers.add_parser('addmobiledevicetogroup', help='Add mobile device to group')
 	parser_addmobiledevicetogroup.set_defaults(cmd='addmobiledevicetogroup')
 	parser_addmobiledevicetogroup.add_argument('mobileSearch', help='Mobile Device to add')
@@ -426,6 +431,11 @@ def main():
 	parser_getcomputerbyid = subparsers.add_parser('getcomputerbyid', help='Get computer by ID')
 	parser_getcomputerbyid.set_defaults(cmd='getcomputerbyid')
 	parser_getcomputerbyid.add_argument('computerID', help=unmanageComputerHelp)
+
+	parser_getcomputersforusersfromcsv = subparsers.add_parser('getcomputersforusersfromcsv', help='Look up computers associated with list of users provided by a CSV file')
+	parser_getcomputersforusersfromcsv.set_defaults(cmd='getcomputersforusersfromcsv')
+	parser_getcomputersforusersfromcsv.add_argument('usersCSV', help='Enter full path to a csv file containing one column of email addresses')
+	parser_getcomputersforusersfromcsv.add_argument('outputCSV', help='Enter full path to the output location for the report CSV')
 
 	parser_getcomputereas = subparsers.add_parser('getcomputereas', help='Get Computer Extension Attributes by Computer JSS ID')
 	parser_getcomputereas.set_defaults(cmd='getcomputereas')
@@ -613,6 +623,10 @@ def main():
 		computerSearch = args.computerSearch
 		computerGroupSearch = args.computerGroupSearch
 		computer_core.addComputerToGroup(computerSearch, computerGroupSearch, user, password)
+	elif APIcommand == 'addcompstogroupfromcsv':
+		compsCSV = args.compsCSV
+		computer_group = args.computerGroupSearch
+		computer_core.addCompstoGroupfromCSV(compsCSV, computer_group, user, password)
 	elif APIcommand == 'addmobiledevicetogroup':
 		mobileSearch = args.mobileSearch
 		mobileGroupSearch = args.mobileGroupSearch
@@ -639,6 +653,10 @@ def main():
 	elif APIcommand == 'getcomputerbyid':
 		computerID = args.computerID
 		computer_core.getComputerByID(computerID, user, password)
+	elif APIcommand == 'getcomputersforusersfromcsv':
+		usersCSV = args.usersCSV
+		outputCSV = args.outputCSV
+		computer_core.getComputersforUsersFromCSV(usersCSV, outputCSV, user, password)
 	elif APIcommand == 'getcomputergroupid':
 		groupSearch = args.groupsearch
 		computergroups.getComputerGroupId(groupSearch, user, password)

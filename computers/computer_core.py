@@ -2,7 +2,7 @@ import sys
 sys.path.append('..')
 import urllib2
 import csv
-from csv import writer, DictWriter
+from csv import writer, DictReader, DictWriter
 from utilities import jamfconfig
 from utilities import apirequests
 from computergroups import computergroups
@@ -280,6 +280,46 @@ def addComputerToGroup(computer, computer_group, username, password):
 		print 'Successfully added computer ' + computer + ' to group ' + computer_group + '.'
 
 
+def addCompstoGroupfromCSV(compsCSV, computer_group, username, password):
+	''' Function takes in csv file with computer JSS IDs and iterates list and adds to computer group from provided argument '''
+
+	computer_group_id = computergroups.getComputerGroupId(computer_group, username, password)
+	if str(computer_group_id) == '-1':
+		print 'Computer group ' + computer_group + ' not found, please try again.'
+		return
+
+	compsList = []
+
+	with open (compsCSV, 'rU') as csvfile:
+		computerreader = csv.reader(csvfile, delimiter=',', quotechar='|')
+		next(computerreader, None)
+
+		for row in computerreader:
+			jssID = row[0].replace('"', '').strip()
+			compsList.append(jssID)
+
+	print '\nAbout to process the following computer JSS IDs: \n'
+	for comp in compsList:
+		print comp
+	print '\nProcessing {} Computer IDs...\n'.format(len(compsList))
+
+	# add to selected JSS group
+	for comp in compsList:
+		print 'Adding computer id ' + str(comp) + ' to computer group id ' + str(computer_group_id)
+
+		putStr = jss_api_base_url + '/computergroups/id/' + str(computer_group_id)
+		putXML = '<computer_group><computer_additions><computer><id>' + str(comp) + '</id></computer></computer_additions></computer_group>'
+
+		response = apirequests.sendAPIRequest(putStr, username, password, 'PUT', putXML)
+
+		if response == -1:
+			print 'Failed to add computer ' + comp + ' to group, see error above.'
+			return
+		else:
+			print 'Successfully added computer ' + comp + ' to group ' + computer_group + '.'
+
+
+
 def removeComputerFromGroup(computer, computer_group, username, password):
 	print 'Running refactored removeComputerFromGroup...\n'
 	# Find computer JSS ID
@@ -431,3 +471,90 @@ def updateComputerUserInfoFromCSV(computersCSV, username, password):
 			print 'Update computer user info with ' + 'JSS ID: ' + compID + ' Username: ' + uName + ' Full Name: ' + fullName + ' Email: ' + email + ' Position: ' + position + ' Phone: ' + str(phone) + ' Dept: ' + department + 'Bldg: ' + building + ' Room: ' + room + ' Overwrite: ' + overwrite
 			updateComputerUserInfo(compID, uName, fullName, email, position, phone, department, building, room, overwrite, username, password)
 	return
+
+
+def getComputersforUsersFromCSV(usersCSV, outputCSV, username, password):
+	''' Function takes in CSV with user email addresses and runs a lookup for associated computers.  Returns Dictionary of Computer info and exports to CSV '''
+	userList = []
+	notFound = []
+
+	with open (usersCSV, 'rU') as csvfile:
+		computerreader = csv.reader(csvfile, delimiter=',', quotechar='|')
+		next(computerreader, None)
+
+		for row in computerreader:
+			email = row[0].replace('"', '').strip()
+			userList.append(email)
+
+	print '\nAbout to run a computer lookup on the following email addresses: \n'
+	for email in userList:
+		print email
+	print '\nProcessing {} Email Addresses\n'.format(len(userList))
+
+	# Open output CSV for updating, Iterate through list of Email addresses and lookup associated computer details, write to CSV
+
+	csvHeaders = ['email','name','asset_tag','sn','mac_addr','jssID']
+
+	with open(outputCSV, 'w') as csvfile:
+		writer = csv.DictWriter(csvfile, fieldnames=csvHeaders)
+		writer.writeheader()
+
+		for email in userList:
+			print '\nLooking up computers for {}...'.format(email)
+			dataDict = {}
+			reqStr = jss_api_base_url + '/computers/match/' + email
+
+			try:
+				r = apirequests.sendAPIRequest(reqStr, username, password, 'GET')
+
+				if r == -1:
+					return
+
+				#responseCode = r.code
+				baseXml = r.read()
+				#print baseXml
+				responseXml = etree.fromstring(baseXml)
+
+				# print 'All computers with ' + computerName + ' as part of the computer information:\n'
+
+				for computer in responseXml.findall('computer'):
+					name = computer.find('name').text
+					asset_tag = computer.find('asset_tag').text
+					sn = computer.find('serial_number').text
+					mac_addr = computer.find('mac_address').text
+					jssID = computer.find('id').text
+					# Create the Dictionary
+					dataDict.update({'email':email})
+					dataDict.update({'name':name})
+					dataDict.update({'asset_tag':asset_tag})
+					dataDict.update({'sn':sn})
+					dataDict.update({'mac_addr':mac_addr})
+					dataDict.update({'jssID':jssID})
+
+				if not dataDict:
+					print 'No computers found for {}, moving on...'.format(email)
+					notFound.append(email)
+				else:
+					# write row to CSV
+					writer.writerow(dataDict)
+
+
+			except UnicodeEncodeError as error:
+				print 'There was a problem parsing the data, likely an invalid character in one of the fields.\n'
+				print error
+
+			except AttributeError as error:
+				print 'There was a problem parsing the data, a required field may have a null value.\n'
+				print error
+
+
+	print '\nComputers CSV has been created at {}.  All Done.'.format(outputCSV)
+
+	print '\nWas unable to find computers for the following user email addresses:\n'
+	for email in notFound:
+		print email
+
+
+
+
+
