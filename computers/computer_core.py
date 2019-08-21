@@ -1,6 +1,7 @@
 import sys
 sys.path.append('..')
 import urllib2
+import requests
 import csv
 from csv import writer, DictReader, DictWriter
 from utilities import jamfconfig
@@ -9,6 +10,73 @@ from computergroups import computergroups
 import xml.etree.ElementTree as etree
 
 jss_api_base_url = jamfconfig.getJSS_API_URL()
+
+
+def getAllComputersBasic(username, password):
+	''' Query Jamf API for all Computers using the Basic Subset query to return limited details on each, create dictionary, return dict for iteration in other methods '''
+
+	reqStr = jss_api_base_url + '/computers/subset/basic'
+	compsBasicDict = {}
+
+	r = apirequests.sendAPIRequest(reqStr, username, password, 'GET')
+
+	if r == -1:
+		return
+
+	baseXml = r.read()
+	# print baseXml
+	responseXml = etree.fromstring(baseXml)
+
+	# computers = responseXml.find('computers')
+
+	for comp in responseXml.findall('computer'):
+		compname = comp.find('name').text
+		jssID = comp.find('id').text
+		compsBasicDict.update({jssID: compname})
+
+	return compsBasicDict
+
+
+def findComputer(computerName, username, password, detail):
+	''' Companion Function for use in other methods to lookup computer in JSS by search string (username) and return matching records as a list of JSS IDs '''
+
+	reqStr = jss_api_base_url + '/computers/match/' + computerName
+	compMatches = []
+
+	r = apirequests.sendAPIRequest(reqStr, username, password, 'GET')
+
+	if r == -1:
+		return
+
+	#responseCode = r.code
+	baseXml = r.read()
+	#print baseXml
+	responseXml = etree.fromstring(baseXml)
+
+	if responseXml:
+		print 'All computers with ' + computerName + ' as part of the computer information:\n'
+
+		for computer in responseXml.findall('computer'):
+			name = computer.find('name').text
+			asset_tag = computer.find('asset_tag').text
+			sn = computer.find('serial_number').text
+			mac_addr = computer.find('mac_address').text
+			jssID = computer.find('id').text
+			#fv2status = computer.find('filevault2_status').text
+			compMatches.append(jssID)
+
+			print 'Computer Name: ' + name
+			print 'Asset Number: ' + str(asset_tag)
+			print 'Serial Number: ' + sn
+			print 'Mac Address: ' + str(mac_addr)
+			print 'JSS Computer ID: ' + jssID + '\n'
+
+		return compMatches
+
+	else:
+		print "No computer matches found"
+		return None
+
 
 def getComputer(computerName, username, password, detail):
 	print 'Running refactored getComputer ...\n'
@@ -127,6 +195,7 @@ def getComputerByID(compID, username, password):
 
 			general = responseXml.find('general')
 			name = general.find('name').text
+			strName = name.encode('utf8', 'replace')
 			jssID = general.find('id').text
 			asset_tag = general.find('asset_tag').text
 			sn = general.find('serial_number').text
@@ -137,7 +206,7 @@ def getComputerByID(compID, username, password):
 			managed = remote_management.find('managed').text
 
 			print '\nGENERAL INFORMATION:'
-			print 'Computer Name: ' + str(name)
+			print 'Computer Name: ' + strName
 			print 'Asset Number: ' + str(asset_tag)
 			print 'JSS Computer ID: ' + str(jssID)
 			print 'Serial Number: ' + str(sn)
@@ -242,6 +311,82 @@ def getComputerByID(compID, username, password):
 
 	else:
 		print 'Failed to find computer with JSS ID ' + compID
+
+
+def getComputerbyLastUser(searchStr, username, password):
+	''' Backup search companion function to do api search for computer ID by matching 'Last User' field.  May require recursive search through all computers.  Returns jss id '''
+	compMatches = []
+
+	# API url for Jamf report containing last user attribute on all active
+	lastuserReportURL = jss_api_base_url + "/advancedcomputersearches/id/43"
+	reportJson = apirequests.sendAPIGetRequest(lastuserReportURL, username, password, 'GET')
+
+	# Iterate over all computer IDs in reportJSON, lookup "last user" and see if matches, return compIDs if found
+	for k,v in reportJson.items():
+		if k == "advanced_computer_search":
+			reportDict = v
+			for k,v in reportDict.items():
+				if k == "computers":
+					compList = v
+
+	for listDict in compList:
+		if listDict["Last_User"] == searchStr:
+			compMatches.append(listDict["id"])
+
+
+	if compMatches:
+		print "\nFound the Following Computers with {} as the Last User:\n".format(searchStr)
+		for comp in compMatches:
+			print comp
+		print "\n"
+		return compMatches
+
+	else:
+		print "\nNo Computer matches with {} found in either the Computer Name or the Last_User fields.".format(searchStr)
+		return None
+
+
+def getCompwithUserinName(searchStr, username, password):
+	'''Function runs the computers basic subset function, iterates on returned dictionary to see if username is in any of the computer name fields, then returns the results as a list'''
+
+	# Get All Computers Dict - subset basic (returns JSS IDs and computer names)
+	compsDict = getAllComputersBasic(username, password)
+	compMatches = []
+
+	# Narrow down search to see if any with matching username as part of computer name
+	print "\nSearching for {} in all Computer name fields...\n".format(searchStr)
+
+	for k,v in compsDict.items():
+		if searchStr in v:
+			compMatches.append(k)
+			print "found a match! computer ID:  {}".format(k)
+
+	if compMatches:
+		return compMatches
+	else:
+		print "No computer name matches found for {}, moving along...".format(searchStr)
+
+
+
+def getCompLocalAccounts(compID, username, password):
+	''' Companion function for use in other methods, to look up Local accounts listed for JSS comp ID, and return usernames as list '''
+
+	reqStr = jss_api_base_url + '/computers/id/' + compID
+	r = apirequests.sendAPIRequest(reqStr, username, password, 'GET')
+
+	if r != 1:
+		baseXml = r.read()
+		#print baseXml
+		responseXml = etree.fromstring(baseXml)
+		groups_accounts = responseXml.find('groups_accounts')
+		local_accounts = groups_accounts.find('local_accounts')
+		localusers = []
+		for user in local_accounts.findall('user'):
+			uname = user.find('name').text
+			localusers.append(uname)
+		return localusers
+	else:
+		return -1
 
 
 def addComputerToGroup(computer, computer_group, username, password):

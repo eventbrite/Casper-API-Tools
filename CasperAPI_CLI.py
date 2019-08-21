@@ -432,6 +432,14 @@ def main():
 	parser_getcomputerbyid.set_defaults(cmd='getcomputerbyid')
 	parser_getcomputerbyid.add_argument('computerID', help=unmanageComputerHelp)
 
+	parser_getcomputerbylastuser = subparsers.add_parser('getcomputerbylastuser', help='Get computer by username listed as last user on device')
+	parser_getcomputerbylastuser.set_defaults(cmd='getcomputerbylastuser')
+	parser_getcomputerbylastuser.add_argument('searchStr', help='Search string for last username')
+
+	parser_getcompwithuserinname = subparsers.add_parser('getcompwithuserinname', help='Get computers with the provided username as part of the computer name')
+	parser_getcompwithuserinname.set_defaults(cmd='getcompwithuserinname')
+	parser_getcompwithuserinname.add_argument('searchStr', help='Search string for username')
+
 	parser_getcomputersforusersfromcsv = subparsers.add_parser('getcomputersforusersfromcsv', help='Look up computers associated with list of users provided by a CSV file')
 	parser_getcomputersforusersfromcsv.set_defaults(cmd='getcomputersforusersfromcsv')
 	parser_getcomputersforusersfromcsv.add_argument('usersCSV', help='Enter full path to a csv file containing one column of email addresses')
@@ -653,10 +661,16 @@ def main():
 	elif APIcommand == 'getcomputerbyid':
 		computerID = args.computerID
 		computer_core.getComputerByID(computerID, user, password)
+	elif APIcommand == 'getcomputerbylastuser':
+		searchStr = args.searchStr
+		computer_core.getComputerbyLastUser(searchStr, user, password)
 	elif APIcommand == 'getcomputersforusersfromcsv':
 		usersCSV = args.usersCSV
 		outputCSV = args.outputCSV
 		computer_core.getComputersforUsersFromCSV(usersCSV, outputCSV, user, password)
+	elif APIcommand == 'getcompwithuserinname':
+		searchStr = args.searchStr
+		computer_core.getCompwithUserinName(searchStr, user, password)
 	elif APIcommand == 'getcomputergroupid':
 		groupSearch = args.groupsearch
 		computergroups.getComputerGroupId(groupSearch, user, password)

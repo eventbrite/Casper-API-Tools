@@ -1,4 +1,6 @@
 import urllib2
+import requests
+from requests.auth import HTTPBasicAuth
 import base64
 
 def sendAPIRequest(reqStr, username, password, method, XML=''):
@@ -64,4 +66,23 @@ def sendAPIRequest(reqStr, username, password, method, XML=''):
 		print 'Unknown method.'
 		return -1
 
+def sendAPIGetRequest(reqStr, username, password, method):
+    ''' simple GET API request to JSS API using requests library'''
 
+    errorMsg_401 = 'Authentication failed. Check your JSS credentials.'
+    errorMsg_404 = 'The JSS could not find the resource you were requesting. Check the URL to the resource you are using.'
+
+    response = requests.get(
+        reqStr, headers={'Accept':'application/json'},
+        auth=HTTPBasicAuth(username, password)
+        )
+
+    if response:
+        print('Successful Response from JSS API')
+        return response.json()
+
+    elif response.status_code == 401:
+        print(errorMsg_401)
+
+    elif response.status_code == 404:
+        print(errorMsg_404)
