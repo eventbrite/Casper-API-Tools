@@ -260,8 +260,14 @@ def getComputerByID(compID, username, password):
 			device = storage.find('device')
 			disk_size = device.find('size').text
 			disk_size_gb = int(disk_size) / 1000
-			partition = device.find('partition')
-			fv2status = partition.find('filevault2_status').text
+			partitions = device.find('partitions')
+			partsList = []
+
+			for part in partitions.findall('partition'):
+				partName = part.find('name').text
+				partfv2status = part.find('filevault2_status').text
+				partsPrint = str(partName) + ':  FV2 Status = ' + str(partfv2status)
+				partsList += [ partsPrint ]
 
 			print '\nHARDWARE INFORMATION:'
 			print 'Model: ' + model
@@ -270,7 +276,10 @@ def getComputerByID(compID, username, password):
 			print 'Processor: ' + processor_type + ' ' + processor_speed + ' MHz'
 			print 'RAM: ' + str(ram_gb) + ' GB'
 			print 'Disk Size: ' + str(disk_size_gb) + ' GB'
-			print 'FileVault2 Status: ' + str(fv2status)
+
+			print '\nPARTITION INFORMATION:'
+			print '\n'.join (sorted (partsList))
+
 
 			extension_attributes = responseXml.find('extension_attributes')
 			eas = []
