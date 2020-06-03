@@ -3,6 +3,8 @@ sys.path.append('..')
 from utilities import jamfconfig
 from utilities import apirequests
 import xml.etree.ElementTree as etree
+import csv
+from csv import writer, DictWriter
 
 import mobiledevices
 import mobiledevice_core
@@ -38,6 +40,23 @@ def deleteMobileDeviceByID(mobile_id, username, password):
 
 		#responseCode = str(response.code)
 		#print 'Response Code: ' + responseCode
+
+
+def deleteMobileIDsFromCSV(mobilesCSV, username, password):
+    print 'Running refactored deleteMobileIDsFromCSV...\n'
+
+    # CSV file with one column, just JSS computer IDs
+
+    with open (mobilesCSV, 'rU') as csvfile:
+        mobilereader = csv.reader(csvfile, delimiter=',', quotechar='|')
+
+        #Skip the header row
+        next(mobilereader, None)
+
+        for row in mobilereader:
+            mobile_ID = row[0].replace('"', '').strip()
+            print 'Test Run: Delete MobileDevice ID ' + mobile_ID
+            deleteMobileDeviceByID(mobile_ID, username, password)
 
 
 def lockMobileDevice(mobileSearch, username, password):
