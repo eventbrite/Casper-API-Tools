@@ -437,6 +437,10 @@ def main():
 	parser_getcomputerbyid.set_defaults(cmd='getcomputerbyid')
 	parser_getcomputerbyid.add_argument('computerID', help=unmanageComputerHelp)
 
+	parser_getcomputerbyidshort = subparsers.add_parser('getcomputerbyidshort', help='Get computer by ID, short output')
+	parser_getcomputerbyidshort.set_defaults(cmd='getcomputerbyidshort')
+	parser_getcomputerbyidshort.add_argument('computerID', help='Get computer by ID, short output')
+
 	parser_getcomputerbylastuser = subparsers.add_parser('getcomputerbylastuser', help='Get computer by username listed as last user on device')
 	parser_getcomputerbylastuser.set_defaults(cmd='getcomputerbylastuser')
 	parser_getcomputerbylastuser.add_argument('searchStr', help='Search string for last username')
@@ -673,6 +677,9 @@ def main():
 	elif APIcommand == 'getcomputerbyid':
 		computerID = args.computerID
 		computer_core.getComputerByID(computerID, user, password)
+	elif APIcommand == 'getcomputerbyidshort':
+		computerID = args.computerID
+		computer_core.getComputerByIDShort(computerID, user, password)
 	elif APIcommand == 'getcomputerbylastuser':
 		searchStr = args.searchStr
 		computer_core.getComputerbyLastUser(searchStr, user, password)
