@@ -16,22 +16,24 @@ def deleteMobileDeviceByID(mobile_id, username, password):
 
 	mobiledevice_core.getMobileDeviceByID(mobile_id, username, password)
 
-	sure = raw_input('Are you sure you want to delete the mobile device above from the JSS? (y/n): ')
+	# Comment out raw input to remove deletion confirmations
+	# sure = raw_input('Are you sure you want to delete the mobile device above from the JSS? (y/n): ')
 
-	if sure == 'y':
-		print "Deleting mobile device " + mobile_id + "..."
+	#if sure == 'y':
 
-		delStr = jss_api_base_url + '/mobiledevices/id/' + mobile_id
-		#print delStr
-		response = apirequests.sendAPIRequest(delStr, username, password, 'DELETE')
+	print "Deleting mobile device " + mobile_id + "..."
 
-		if response == -1:
-			print 'Failed to delete mobile device. See errors above.'
-		else:
-			print 'Successfully deleted mobile device ' + mobile_id
+	delStr = jss_api_base_url + '/mobiledevices/id/' + mobile_id
+	#print delStr
+	response = apirequests.sendAPIRequest(delStr, username, password, 'DELETE')
 
+	if response == -1:
+		print 'Failed to delete mobile device. See errors above.'
 	else:
-		print 'Aborting request to delete mobile device ' + mobile_id
+		print 'Successfully deleted mobile device ' + mobile_id
+
+	# else:
+	# 	print 'Aborting request to delete mobile device ' + mobile_id
 
 		## Uncomment this part to see the xml response
 		#xmlstring = response.read()
@@ -43,20 +45,20 @@ def deleteMobileDeviceByID(mobile_id, username, password):
 
 
 def deleteMobileIDsFromCSV(mobilesCSV, username, password):
-    print 'Running refactored deleteMobileIDsFromCSV...\n'
+	print 'Running refactored deleteMobileIDsFromCSV...\n'
 
-    # CSV file with one column, just JSS computer IDs
+	# CSV file with one column, just JSS computer IDs
 
-    with open (mobilesCSV, 'rU') as csvfile:
-        mobilereader = csv.reader(csvfile, delimiter=',', quotechar='|')
+	with open (mobilesCSV, 'rU') as csvfile:
+		mobilereader = csv.reader(csvfile, delimiter=',', quotechar='|')
 
-        #Skip the header row
-        next(mobilereader, None)
+		#Skip the header row
+		next(mobilereader, None)
 
-        for row in mobilereader:
-            mobile_ID = row[0].replace('"', '').strip()
-            print 'Test Run: Delete MobileDevice ID ' + mobile_ID
-            deleteMobileDeviceByID(mobile_ID, username, password)
+		for row in mobilereader:
+			mobile_ID = row[0].replace('"', '').strip()
+			print 'Test Run: Delete MobileDevice ID ' + mobile_ID
+			deleteMobileDeviceByID(mobile_ID, username, password)
 
 
 def lockMobileDevice(mobileSearch, username, password):
