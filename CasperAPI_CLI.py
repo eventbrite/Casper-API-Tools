@@ -39,6 +39,7 @@ import subprocess
 from policies import policies_core
 from policies import policies_extended
 from computers import computer_core
+from computers import computer_ea
 from computers import computer_lifecycle
 from computergroups import computergroups
 from mobiledevices import mobiledevices
@@ -426,6 +427,20 @@ def main():
 	parser_getcomputerbyid.set_defaults(cmd='getcomputerbyid')
 	parser_getcomputerbyid.add_argument('computerID', help=unmanageComputerHelp)
 
+	parser_getcomputereas = subparsers.add_parser('getcomputereas', help='Get Computer Extension Attributes by Computer JSS ID')
+	parser_getcomputereas.set_defaults(cmd='getcomputereas')
+	parser_getcomputereas.add_argument('computerID', help='Provide a Computer JSS ID')
+
+	parser_getcomputereabyid = subparsers.add_parser('getcomputereabyid', help='Get Computer Extension Attribute by computer ID and EA ID')
+	parser_getcomputereabyid.set_defaults(cmd='getcomputereabyid')
+	parser_getcomputereabyid.add_argument('computerID', help='Provide the Computer JSS ID')
+	parser_getcomputereabyid.add_argument('extattribID', help='Provide the Extension Attribute JSS ID')
+
+	parser_getcomputereabyname = subparsers.add_parser('getcomputereabyname', help='Get Computer Extension Attribute by Computer ID and EA Search String')
+	parser_getcomputereabyname.set_defaults(cmd='getcomputereabyname')
+	parser_getcomputereabyname.add_argument('computerID', help='Provide the Computer JSS ID')
+	parser_getcomputereabyname.add_argument('searchStr', help='Provide a Search String for the Extension Attribute name - enclose phrases in quotes')
+
 	parser_getcomputergroupid = subparsers.add_parser('getcomputergroupid', help='Get computer group JSS ID')
 	parser_getcomputergroupid.set_defaults(cmd='getcomputergroupid')
 	parser_getcomputergroupid.add_argument('groupsearch', help='Search string for computer group')
@@ -497,6 +512,19 @@ def main():
 	parser_updateassettag.set_defaults(cmd='updateassettag')
 	parser_updateassettag.add_argument('computerID', help='JSS Computer ID')
 	parser_updateassettag.add_argument('assetTag', help='Asset Tag')
+
+	parser_updatecomputereabyid = subparsers.add_parser('updatecomputereabyid', help='Update Computer Extension Attribute by computer ID and EA ID')
+	parser_updatecomputereabyid.set_defaults(cmd='updatecomputereabyid')
+	parser_updatecomputereabyid.add_argument('computerID', help='Provide the Computer JSS ID')
+	parser_updatecomputereabyid.add_argument('extattribID', help='Provide the Extension Attribute JSS ID')
+	parser_updatecomputereabyid.add_argument('newValue', help='Provide the new value for the Extension Attribute. Enclose phrases in quotes.')
+
+	parser_updatecomputereabyname = subparsers.add_parser('updatecomputereabyname', help='Update Computer Extension Attribute by computer ID and EA Search String Lookup')
+	parser_updatecomputereabyname.set_defaults(cmd='updatecomputereabyname')
+	parser_updatecomputereabyname.add_argument('computerID', help='Provide the Computer JSS ID')
+	parser_updatecomputereabyname.add_argument('searchStr', help='Provide a Search String to lookup possible Extension Attributes')
+	parser_updatecomputereabyname.add_argument('newValue', help='Provide the new value for the Extension Attribute. Enclose phrases in quotes.')
+
 	parser_updatecomputeruserinfo = subparsers.add_parser('updatecomputeruserinfo', help='Update User and Location Info')
 	parser_updatecomputeruserinfo.set_defaults(cmd='updatecomputeruserinfo')
 	parser_updatecomputeruserinfo.add_argument('computerID', help='JSS Computer ID')
@@ -614,6 +642,17 @@ def main():
 	elif APIcommand == 'getcomputergroupid':
 		groupSearch = args.groupsearch
 		computergroups.getComputerGroupId(groupSearch, user, password)
+	elif APIcommand == 'getcomputereas':
+		computerID = args.computerID
+		computer_ea.getCompEAsbyCompID(computerID, user, password)
+	elif APIcommand == 'getcomputereabyid':
+		computerID = args.computerID
+		extattribID = args.extattribID
+		computer_ea.getCompEAbyEAID(computerID, extattribID, user, password)
+	elif APIcommand == 'getcomputereabyname':
+		computerID = args.computerID
+		searchStr = args.searchStr
+		computer_ea.getCompEAbyEAname(computerID, searchStr, user, password)
 	elif APIcommand == 'getcomputergroupmembers':
 		groupSearch = args.groupsearch
 		computergroups.getComputerGroupMembers(groupSearch, user, password)
@@ -683,6 +722,16 @@ def main():
 	elif APIcommand == 'updatecomputeruserinfofromcsv':
 		computersCSV = args.csvfile
 		computer_core.updateComputerUserInfoFromCSV(computersCSV, user, password)
+	elif APIcommand == 'updatecomputereabyid':
+		computerID = args.computerID
+		extattribID = args.extattribID
+		newValue = args.newValue
+		computer_ea.updateEAbyID(computerID, extattribID, newValue, user, password)
+	elif APIcommand == 'updatecomputereabyname':
+		computerID = args.computerID
+		searchStr = args.searchStr
+		newValue = args.newValue
+		computer_ea.updateEAbysearchStr(computerID, searchStr, newValue, user, password)
 	elif APIcommand == 'updatemobileassettag':
 		mobileSearch = args.mobileSearch
 		assetTag = args.assetTag
