@@ -1,14 +1,82 @@
 import sys
 sys.path.append('..')
 import urllib2
+import requests
 import csv
-from csv import writer, DictWriter
+from csv import writer, DictReader, DictWriter
 from utilities import jamfconfig
 from utilities import apirequests
 from computergroups import computergroups
 import xml.etree.ElementTree as etree
 
 jss_api_base_url = jamfconfig.getJSS_API_URL()
+
+
+def getAllComputersBasic(username, password):
+	''' Query Jamf API for all Computers using the Basic Subset query to return limited details on each, create dictionary, return dict for iteration in other methods '''
+
+	reqStr = jss_api_base_url + '/computers/subset/basic'
+	compsBasicDict = {}
+
+	r = apirequests.sendAPIRequest(reqStr, username, password, 'GET')
+
+	if r == -1:
+		return
+
+	baseXml = r.read()
+	# print baseXml
+	responseXml = etree.fromstring(baseXml)
+
+	# computers = responseXml.find('computers')
+
+	for comp in responseXml.findall('computer'):
+		compname = comp.find('name').text
+		jssID = comp.find('id').text
+		compsBasicDict.update({jssID: compname})
+
+	return compsBasicDict
+
+
+def findComputer(computerName, username, password, detail):
+	''' Companion Function for use in other methods to lookup computer in JSS by search string (username) and return matching records as a list of JSS IDs '''
+
+	reqStr = jss_api_base_url + '/computers/match/' + computerName
+	compMatches = []
+
+	r = apirequests.sendAPIRequest(reqStr, username, password, 'GET')
+
+	if r == -1:
+		return
+
+	#responseCode = r.code
+	baseXml = r.read()
+	#print baseXml
+	responseXml = etree.fromstring(baseXml)
+
+	if responseXml:
+		print 'All computers with ' + computerName + ' as part of the computer information:\n'
+
+		for computer in responseXml.findall('computer'):
+			name = computer.find('name').text
+			asset_tag = computer.find('asset_tag').text
+			sn = computer.find('serial_number').text
+			mac_addr = computer.find('mac_address').text
+			jssID = computer.find('id').text
+			#fv2status = computer.find('filevault2_status').text
+			compMatches.append(jssID)
+
+			print 'Computer Name: ' + name
+			print 'Asset Number: ' + str(asset_tag)
+			print 'Serial Number: ' + sn
+			print 'Mac Address: ' + str(mac_addr)
+			print 'JSS Computer ID: ' + jssID + '\n'
+
+		return compMatches
+
+	else:
+		print "No computer matches found"
+		return None
+
 
 def getComputer(computerName, username, password, detail):
 	print 'Running refactored getComputer ...\n'
@@ -127,6 +195,7 @@ def getComputerByID(compID, username, password):
 
 			general = responseXml.find('general')
 			name = general.find('name').text
+			strName = name.encode('utf8', 'replace')
 			jssID = general.find('id').text
 			asset_tag = general.find('asset_tag').text
 			sn = general.find('serial_number').text
@@ -137,7 +206,7 @@ def getComputerByID(compID, username, password):
 			managed = remote_management.find('managed').text
 
 			print '\nGENERAL INFORMATION:'
-			print 'Computer Name: ' + str(name)
+			print 'Computer Name: ' + strName
 			print 'Asset Number: ' + str(asset_tag)
 			print 'JSS Computer ID: ' + str(jssID)
 			print 'Serial Number: ' + str(sn)
@@ -244,6 +313,82 @@ def getComputerByID(compID, username, password):
 		print 'Failed to find computer with JSS ID ' + compID
 
 
+def getComputerbyLastUser(searchStr, username, password):
+	''' Backup search companion function to do api search for computer ID by matching 'Last User' field.  May require recursive search through all computers.  Returns jss id '''
+	compMatches = []
+
+	# API url for Jamf report containing last user attribute on all active
+	lastuserReportURL = jss_api_base_url + "/advancedcomputersearches/id/43"
+	reportJson = apirequests.sendAPIGetRequest(lastuserReportURL, username, password, 'GET')
+
+	# Iterate over all computer IDs in reportJSON, lookup "last user" and see if matches, return compIDs if found
+	for k,v in reportJson.items():
+		if k == "advanced_computer_search":
+			reportDict = v
+			for k,v in reportDict.items():
+				if k == "computers":
+					compList = v
+
+	for listDict in compList:
+		if listDict["Last_User"] == searchStr:
+			compMatches.append(listDict["id"])
+
+
+	if compMatches:
+		print "\nFound the Following Computers with {} as the Last User:\n".format(searchStr)
+		for comp in compMatches:
+			print comp
+		print "\n"
+		return compMatches
+
+	else:
+		print "\nNo Computer matches with {} found in either the Computer Name or the Last_User fields.".format(searchStr)
+		return None
+
+
+def getCompwithUserinName(searchStr, username, password):
+	'''Function runs the computers basic subset function, iterates on returned dictionary to see if username is in any of the computer name fields, then returns the results as a list'''
+
+	# Get All Computers Dict - subset basic (returns JSS IDs and computer names)
+	compsDict = getAllComputersBasic(username, password)
+	compMatches = []
+
+	# Narrow down search to see if any with matching username as part of computer name
+	print "\nSearching for {} in all Computer name fields...\n".format(searchStr)
+
+	for k,v in compsDict.items():
+		if searchStr in v:
+			compMatches.append(k)
+			print "found a match! computer ID:  {}".format(k)
+
+	if compMatches:
+		return compMatches
+	else:
+		print "No computer name matches found for {}, moving along...".format(searchStr)
+
+
+
+def getCompLocalAccounts(compID, username, password):
+	''' Companion function for use in other methods, to look up Local accounts listed for JSS comp ID, and return usernames as list '''
+
+	reqStr = jss_api_base_url + '/computers/id/' + compID
+	r = apirequests.sendAPIRequest(reqStr, username, password, 'GET')
+
+	if r != 1:
+		baseXml = r.read()
+		#print baseXml
+		responseXml = etree.fromstring(baseXml)
+		groups_accounts = responseXml.find('groups_accounts')
+		local_accounts = groups_accounts.find('local_accounts')
+		localusers = []
+		for user in local_accounts.findall('user'):
+			uname = user.find('name').text
+			localusers.append(uname)
+		return localusers
+	else:
+		return -1
+
+
 def addComputerToGroup(computer, computer_group, username, password):
 	print 'Running refactored addComputerToGroup...\n'
 	# Find computer JSS ID
@@ -278,6 +423,46 @@ def addComputerToGroup(computer, computer_group, username, password):
 		return
 	else:
 		print 'Successfully added computer ' + computer + ' to group ' + computer_group + '.'
+
+
+def addCompstoGroupfromCSV(compsCSV, computer_group, username, password):
+	''' Function takes in csv file with computer JSS IDs and iterates list and adds to computer group from provided argument '''
+
+	computer_group_id = computergroups.getComputerGroupId(computer_group, username, password)
+	if str(computer_group_id) == '-1':
+		print 'Computer group ' + computer_group + ' not found, please try again.'
+		return
+
+	compsList = []
+
+	with open (compsCSV, 'rU') as csvfile:
+		computerreader = csv.reader(csvfile, delimiter=',', quotechar='|')
+		next(computerreader, None)
+
+		for row in computerreader:
+			jssID = row[0].replace('"', '').strip()
+			compsList.append(jssID)
+
+	print '\nAbout to process the following computer JSS IDs: \n'
+	for comp in compsList:
+		print comp
+	print '\nProcessing {} Computer IDs...\n'.format(len(compsList))
+
+	# add to selected JSS group
+	for comp in compsList:
+		print 'Adding computer id ' + str(comp) + ' to computer group id ' + str(computer_group_id)
+
+		putStr = jss_api_base_url + '/computergroups/id/' + str(computer_group_id)
+		putXML = '<computer_group><computer_additions><computer><id>' + str(comp) + '</id></computer></computer_additions></computer_group>'
+
+		response = apirequests.sendAPIRequest(putStr, username, password, 'PUT', putXML)
+
+		if response == -1:
+			print 'Failed to add computer ' + comp + ' to group, see error above.'
+			return
+		else:
+			print 'Successfully added computer ' + comp + ' to group ' + computer_group + '.'
+
 
 
 def removeComputerFromGroup(computer, computer_group, username, password):
@@ -431,3 +616,90 @@ def updateComputerUserInfoFromCSV(computersCSV, username, password):
 			print 'Update computer user info with ' + 'JSS ID: ' + compID + ' Username: ' + uName + ' Full Name: ' + fullName + ' Email: ' + email + ' Position: ' + position + ' Phone: ' + str(phone) + ' Dept: ' + department + 'Bldg: ' + building + ' Room: ' + room + ' Overwrite: ' + overwrite
 			updateComputerUserInfo(compID, uName, fullName, email, position, phone, department, building, room, overwrite, username, password)
 	return
+
+
+def getComputersforUsersFromCSV(usersCSV, outputCSV, username, password):
+	''' Function takes in CSV with user email addresses and runs a lookup for associated computers.  Returns Dictionary of Computer info and exports to CSV '''
+	userList = []
+	notFound = []
+
+	with open (usersCSV, 'rU') as csvfile:
+		computerreader = csv.reader(csvfile, delimiter=',', quotechar='|')
+		next(computerreader, None)
+
+		for row in computerreader:
+			email = row[0].replace('"', '').strip()
+			userList.append(email)
+
+	print '\nAbout to run a computer lookup on the following email addresses: \n'
+	for email in userList:
+		print email
+	print '\nProcessing {} Email Addresses\n'.format(len(userList))
+
+	# Open output CSV for updating, Iterate through list of Email addresses and lookup associated computer details, write to CSV
+
+	csvHeaders = ['email','name','asset_tag','sn','mac_addr','jssID']
+
+	with open(outputCSV, 'w') as csvfile:
+		writer = csv.DictWriter(csvfile, fieldnames=csvHeaders)
+		writer.writeheader()
+
+		for email in userList:
+			print '\nLooking up computers for {}...'.format(email)
+			dataDict = {}
+			reqStr = jss_api_base_url + '/computers/match/' + email
+
+			try:
+				r = apirequests.sendAPIRequest(reqStr, username, password, 'GET')
+
+				if r == -1:
+					return
+
+				#responseCode = r.code
+				baseXml = r.read()
+				#print baseXml
+				responseXml = etree.fromstring(baseXml)
+
+				# print 'All computers with ' + computerName + ' as part of the computer information:\n'
+
+				for computer in responseXml.findall('computer'):
+					name = computer.find('name').text
+					asset_tag = computer.find('asset_tag').text
+					sn = computer.find('serial_number').text
+					mac_addr = computer.find('mac_address').text
+					jssID = computer.find('id').text
+					# Create the Dictionary
+					dataDict.update({'email':email})
+					dataDict.update({'name':name})
+					dataDict.update({'asset_tag':asset_tag})
+					dataDict.update({'sn':sn})
+					dataDict.update({'mac_addr':mac_addr})
+					dataDict.update({'jssID':jssID})
+
+				if not dataDict:
+					print 'No computers found for {}, moving on...'.format(email)
+					notFound.append(email)
+				else:
+					# write row to CSV
+					writer.writerow(dataDict)
+
+
+			except UnicodeEncodeError as error:
+				print 'There was a problem parsing the data, likely an invalid character in one of the fields.\n'
+				print error
+
+			except AttributeError as error:
+				print 'There was a problem parsing the data, a required field may have a null value.\n'
+				print error
+
+
+	print '\nComputers CSV has been created at {}.  All Done.'.format(outputCSV)
+
+	print '\nWas unable to find computers for the following user email addresses:\n'
+	for email in notFound:
+		print email
+
+
+
+
+
