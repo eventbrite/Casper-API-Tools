@@ -138,6 +138,7 @@ def getMobileDeviceByID(mobileID, username, password):
 		general = responseXml.find('general')
 		jssID = general.find('id').text
 		name = general.find('name').text
+		strName = name.encode('utf8', 'replace')
 		model = general.find('model').text
 		last_inventory_update = general.find('last_inventory_update').text
 		asset_tag = general.find('asset_tag').text
@@ -150,7 +151,7 @@ def getMobileDeviceByID(mobileID, username, password):
 
 		print '\nGENERAL INFORMATION:'
 		print 'JSS Mobile Device ID: ' + jssID
-		print 'Mobile Name: ' + name
+		print 'Mobile Name: ' + strName
 		print 'Model: ' + model
 		print 'Last Inventory Update: ' + last_inventory_update
 		print 'Asset Number: ' + str(asset_tag)

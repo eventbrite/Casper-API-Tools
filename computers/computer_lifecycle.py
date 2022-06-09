@@ -62,7 +62,7 @@ def unmanageComputerIDsFromCSV(computersCSV, username, password):
 def deleteComputerByID(comp_id, username, password):
     print 'Running refactored deleteComputerByID...\n'
 
-    computer_core.getComputerByID(comp_id, username, password)
+    computer_core.getComputerByIDShort(comp_id, username, password)
 
     sure = raw_input('Are you sure you want to delete the computer above from the JSS? (y/n): ')
 
@@ -90,8 +90,35 @@ def deleteComputerByID(comp_id, username, password):
         #print 'Response Code: ' + responseCode
 
 
+def deleteComputerByIDBulk(comp_id, username, password):
+    ''' Same as deleteComputerbyID function with added error logging for playback '''
+
+    compDict = computer_core.getComputerByIDShort(comp_id, username, password)
+
+    # sure = raw_input('Are you sure you want to delete the computer above from the JSS? (y/n): ')
+
+    # if sure == 'y':
+    print "Deleting computer " + comp_id + "..."
+
+    delStr = jss_api_base_url + '/computers/id/' + comp_id
+        #print delStr
+    response = apirequests.sendAPIRequest(delStr, username, password, 'DELETE')
+
+    if response == -1:
+        print 'Failed to delete computer. See errors above.'
+        return compDict
+    else:
+        print 'Successfully deleted computer ' + comp_id
+
+    # else:
+    #     print 'Aborting request to delete computer ' + comp_id
+
+
 def deleteComputerIDsFromCSV(computersCSV, username, password):
     print 'Running refactored deleteComputerIDsFromCSV...\n'
+
+    errList = []
+    successList = []
 
     # CSV file with one column, just JSS computer IDs
 
@@ -103,5 +130,24 @@ def deleteComputerIDsFromCSV(computersCSV, username, password):
 
         for row in computerreader:
             compID = row[0].replace('"', '').strip()
-            print 'Test Run: Delete computer ID ' + compID
-            deleteComputerByID(compID, username, password)
+            # print 'Test Run: Delete computer ID ' + compID
+
+            # deletComputerByIDBulk function returns a comp details dict if errors
+            delResult = deleteComputerByIDBulk(compID, username, password)
+            if delResult:
+                print 'Encountered a problem deleting computer ID:  ' + compID + '\n'
+                errList.append(delResult)
+
+    if errList:
+        print '\nERROR SUMMARY:\n'
+        print 'The Following Computers Encountered Errors During Deletion:  \n'
+        for compDict in errList:
+            print compDict
+        print '\n\n'
+    else:
+        print 'Finished Deleting Jamf Computer Records.  Have a nice day! \n'
+
+
+
+
+

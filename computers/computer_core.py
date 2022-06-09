@@ -334,6 +334,116 @@ def getComputerByID(compID, username, password):
 		print 'Failed to find computer with JSS ID ' + compID
 
 
+def getComputerByIDShort(compID, username, password):
+	''' Same as getComputerbyID function, with condensed output and comp details dictionary for use
+	in bulk operation functions - for error logging and reporting '''
+
+	compDetailsDict = {}
+	reqStr = jss_api_base_url + '/computers/id/' + compID
+
+	#print reqStr
+
+	r = apirequests.sendAPIRequest(reqStr, username, password, 'GET')
+
+	if r != -1:
+		try:
+			responseCode = r.code
+
+			#print 'Response Code: ' + str(responseCode)
+
+			baseXml = r.read()
+			#print baseXml
+			responseXml = etree.fromstring(baseXml)
+
+			#print responseXml.tag
+
+			general = responseXml.find('general')
+			name = general.find('name').text
+			strName = name.encode('utf8', 'replace')
+			jssID = general.find('id').text
+			asset_tag = general.find('asset_tag').text
+			sn = general.find('serial_number').text
+			last_contact_time = responseXml.find('general/last_contact_time').text
+			report_time = responseXml.find('general/report_date').text
+
+			print '\nGENERAL INFORMATION:'
+			compDetailsDict.update({'Computer Name': strName})
+			print 'Computer Name: ' + strName
+			compDetailsDict.update({'Asset Number': str(asset_tag)})
+			print 'Asset Number: ' + str(asset_tag)
+			compDetailsDict.update({'JSS Computer ID': str(jssID)})
+			print 'JSS Computer ID: ' + str(jssID)
+			compDetailsDict.update({'Serial Number': str(sn)})
+			print 'Serial Number: ' + str(sn)
+			print 'Last Check-In: ' + str(last_contact_time)
+
+			assigned_user = responseXml.find('location/username').text
+			email_address = responseXml.find('location/email_address').text
+			position = responseXml.find('location/position').text
+			department = responseXml.find('location/department').text
+			building = responseXml.find('location/building').text
+
+			print '\nUSER AND LOCATION:'
+			compDetailsDict.update({'Username': str(assigned_user)})
+			print 'Username: ' + str(assigned_user)
+			compDetailsDict.update({'Email': str(email_address)})
+			print 'Email: ' + str(email_address)
+			print 'Position: ' + str(position)
+			print 'Department: ' + str(department)
+			print 'Building: ' + str(building)
+
+			extension_attributes = responseXml.find('extension_attributes')
+			eas = []
+
+			for ea in extension_attributes.findall('extension_attribute'):
+				eaName = ea.find('name').text
+				eaValue = ea.find('value').text
+				if eaName == "Last User":
+					eaPair = str(eaName) + ': ' + str(eaValue)
+
+			print '\n' + eaPair
+
+			groups_accounts = responseXml.find('groups_accounts')
+			computer_group_memberships = groups_accounts.find('computer_group_memberships')
+			#print computer_group_memberships
+
+			groups = []
+			for group in computer_group_memberships.findall('group'):
+				groupName = group.text
+				groups += [ groupName ]
+
+			local_accounts = groups_accounts.find('local_accounts')
+			localusers = []
+			for user in local_accounts.findall('user'):
+				username = user.find('name').text
+				localusers += [ username ]
+
+			print '\nLOCAL ACCOUNTS: '
+			print '\n'.join (sorted (localusers))
+
+			print '\n'
+			#print prettify(responseXml)
+
+			#print etree.tostring(responseXml)
+
+		except UnicodeEncodeError as error:
+			print 'There was a problem parsing the data, likely an invalid character in one of the fields.\n'
+			print error
+
+		except AttributeError as error:
+			print 'There was a problem parsing the data, a required field may have a null value.\n'
+			print error
+
+	else:
+		print 'Failed to find computer with JSS ID ' + compID
+		compDetailsDict.update({'Not Found in the JSS': compID})
+		return compDetailsDict
+	# print compDetailsDict
+	return compDetailsDict
+
+
+
+
 def getComputerbyLastUser(searchStr, username, password):
 	''' Backup search companion function to do api search for computer ID by matching 'Last User' field.  May require recursive search through all computers.  Returns jss id '''
 	compMatches = []
