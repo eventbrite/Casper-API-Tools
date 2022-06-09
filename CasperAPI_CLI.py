@@ -505,6 +505,14 @@ def main():
 	parser_getpolicybyid.set_defaults(cmd='getpolicybyid')
 	parser_getpolicybyid.add_argument('policyid', help='ID number for the JSS Policy.  If uncertain, run getallpolicies to see entire list')
 
+	parser_deletepolicybyid = subparsers.add_parser('deletepolicybyid', help='Delete specific policy by JSS ID')
+	parser_deletepolicybyid.set_defaults(cmd='deletepolicybyid')
+	parser_deletepolicybyid.add_argument('policyid', help='ID number for the JSS Policy.  If uncertain, run getallpolicies to see entire list')
+
+	parser_deletepolicyidsfromcsv = subparsers.add_parser('deletepolicyidsfromcsv', help='Delete policies by JSS ID in CSV file')
+	parser_deletepolicyidsfromcsv.set_defaults(cmd='deletepolicyidsfromcsv')
+	parser_deletepolicyidsfromcsv.add_argument('policycsv', help='directory path to CSV file containing one column only of JSS IDs')
+
 	parser_getenabledpolicies = subparsers.add_parser('getenabledpolicies', help='Get all currently enabled policies')
 	parser_getenabledpolicies.set_defaults(cmd='getenabledpolicies')
 
@@ -737,6 +745,12 @@ def main():
 	elif APIcommand == 'getpoliciesscopedtogroup':
 		groupid = args.groupid
 		policies_extended.getPoliciesScopedtoGroup(groupid, user, password)
+	elif APIcommand == 'deletepolicybyid':
+		policyid = args.policyid
+		policies_extended.deletePolicyByID(policyid, user, password)
+	elif APIcommand == 'deletepolicyidsfromcsv':
+		policycsv = args.policycsv
+		policies_extended.deletePolicyIDsFromCSV(policycsv, user, password)
 	elif APIcommand == 'lockmobiledevice':
 		mobileSearch = args.mobileSearch
 		mobiledevice_lifecycle.lockMobileDevice(mobileSearch, user, password)
