@@ -428,6 +428,7 @@ def main():
 	parser_getcomputer.set_defaults(cmd='getcomputer')
 	parser_getcomputer.add_argument('compsearch', help='Search string for computer')
 	parser_getcomputer.add_argument('-d', '--detail', default='no', help='Print detailed computer info')
+
 	parser_getcomputerbyid = subparsers.add_parser('getcomputerbyid', help='Get computer by ID')
 	parser_getcomputerbyid.set_defaults(cmd='getcomputerbyid')
 	parser_getcomputerbyid.add_argument('computerID', help=unmanageComputerHelp)
@@ -435,6 +436,10 @@ def main():
 	parser_getcomputerbylastuser = subparsers.add_parser('getcomputerbylastuser', help='Get computer by username listed as last user on device')
 	parser_getcomputerbylastuser.set_defaults(cmd='getcomputerbylastuser')
 	parser_getcomputerbylastuser.add_argument('searchStr', help='Search string for last username')
+
+	parser_getcomputerbysn = subparsers.add_parser('getcomputerbysn', help='Get computer by serial number of device')
+	parser_getcomputerbysn.set_defaults(cmd='getcomputerbysn')
+	parser_getcomputerbysn.add_argument('searchStr', help='Search string for Serial Number')
 
 	parser_getcompwithuserinname = subparsers.add_parser('getcompwithuserinname', help='Get computers with the provided username as part of the computer name')
 	parser_getcompwithuserinname.set_defaults(cmd='getcompwithuserinname')
@@ -664,6 +669,9 @@ def main():
 	elif APIcommand == 'getcomputerbylastuser':
 		searchStr = args.searchStr
 		computer_core.getComputerbyLastUser(searchStr, user, password)
+	elif APIcommand == 'getcomputerbysn':
+		searchStr = args.searchStr
+		computer_core.getComputerBySN(searchStr, user, password)
 	elif APIcommand == 'getcomputersforusersfromcsv':
 		usersCSV = args.usersCSV
 		outputCSV = args.outputCSV

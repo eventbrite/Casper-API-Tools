@@ -12,7 +12,7 @@ import xml.etree.ElementTree as etree
 jss_api_base_url = jamfconfig.getJSS_API_URL()
 
 
-def getAllComputersBasic(username, password):
+def getAllComputersBasic(username, password, sn=False):
 	''' Query Jamf API for all Computers using the Basic Subset query to return limited details on each, create dictionary, return dict for iteration in other methods '''
 
 	reqStr = jss_api_base_url + '/computers/subset/basic'
@@ -29,18 +29,29 @@ def getAllComputersBasic(username, password):
 
 	# computers = responseXml.find('computers')
 
-	for comp in responseXml.findall('computer'):
-		compname = comp.find('name').text
-		jssID = comp.find('id').text
-		compsBasicDict.update({jssID: compname})
+	if sn:
+		for comp in responseXml.findall('computer'):
+			serial = comp.find('serial_number').text
+			jssID = comp.find('id').text
+			compsBasicDict.update({jssID: serial})
+
+	else:
+		for comp in responseXml.findall('computer'):
+			compname = comp.find('name').text
+			jssID = comp.find('id').text
+			compsBasicDict.update({jssID: compname})
 
 	return compsBasicDict
 
 
-def findComputer(computerName, username, password, detail):
+def findComputer(computerName, username, password, detail, sn=False):
 	''' Companion Function for use in other methods to lookup computer in JSS by search string (username) and return matching records as a list of JSS IDs '''
 
-	reqStr = jss_api_base_url + '/computers/match/' + computerName
+	if sn:
+		reqStr = jss_api_base_url + '/computers/serialnumber/' + sn
+	else:
+		reqStr = jss_api_base_url + '/computers/match/' + computerName
+
 	compMatches = []
 
 	r = apirequests.sendAPIRequest(reqStr, username, password, 'GET')
@@ -79,7 +90,8 @@ def findComputer(computerName, username, password, detail):
 
 
 def getComputer(computerName, username, password, detail):
-	print 'Running refactored getComputer ...\n'
+	print 'Running refactored getComputer ... with Serial Number option \n'
+
 	reqStr = jss_api_base_url + '/computers/match/' + computerName
 	#print reqStr
 	#print detail
@@ -248,8 +260,14 @@ def getComputerByID(compID, username, password):
 			device = storage.find('device')
 			disk_size = device.find('size').text
 			disk_size_gb = int(disk_size) / 1000
-			partition = device.find('partition')
-			fv2status = partition.find('filevault2_status').text
+			partitions = device.find('partitions')
+			partsList = []
+
+			for part in partitions.findall('partition'):
+				partName = part.find('name').text
+				partfv2status = part.find('filevault2_status').text
+				partsPrint = str(partName) + ':  FV2 Status = ' + str(partfv2status)
+				partsList += [ partsPrint ]
 
 			print '\nHARDWARE INFORMATION:'
 			print 'Model: ' + model
@@ -258,7 +276,10 @@ def getComputerByID(compID, username, password):
 			print 'Processor: ' + processor_type + ' ' + processor_speed + ' MHz'
 			print 'RAM: ' + str(ram_gb) + ' GB'
 			print 'Disk Size: ' + str(disk_size_gb) + ' GB'
-			print 'FileVault2 Status: ' + str(fv2status)
+
+			print '\nPARTITION INFORMATION:'
+			print '\n'.join (sorted (partsList))
+
 
 			extension_attributes = responseXml.find('extension_attributes')
 			eas = []
@@ -350,7 +371,7 @@ def getCompwithUserinName(searchStr, username, password):
 	'''Function runs the computers basic subset function, iterates on returned dictionary to see if username is in any of the computer name fields, then returns the results as a list'''
 
 	# Get All Computers Dict - subset basic (returns JSS IDs and computer names)
-	compsDict = getAllComputersBasic(username, password)
+	compsDict = getAllComputersBasic(username, password, sn=False)
 	compMatches = []
 
 	# Narrow down search to see if any with matching username as part of computer name
@@ -366,6 +387,148 @@ def getCompwithUserinName(searchStr, username, password):
 	else:
 		print "No computer name matches found for {}, moving along...".format(searchStr)
 
+
+def getComputerBySN(searchStr, username, password):
+	''' Function to look up computer by Serial Number by querying the Computer/serialnumber api
+	endpoint - based on the getcomputerbyid function '''
+	serial = str(searchStr)
+	print "Getting computer with Serial Number " + serial + "..."
+	reqStr = jss_api_base_url + '/computers/serialnumber/' + serial
+
+	#print reqStr
+
+	r = apirequests.sendAPIRequest(reqStr, username, password, 'GET')
+
+	if r != -1:
+		try:
+			responseCode = r.code
+
+			#print 'Response Code: ' + str(responseCode)
+
+			baseXml = r.read()
+			#print baseXml
+			responseXml = etree.fromstring(baseXml)
+
+			#print responseXml.tag
+
+			general = responseXml.find('general')
+			name = general.find('name').text
+			strName = name.encode('utf8', 'replace')
+			jssID = general.find('id').text
+			asset_tag = general.find('asset_tag').text
+			sn = general.find('serial_number').text
+			mac_addr = general.find('mac_address').text
+			last_contact_time = responseXml.find('general/last_contact_time').text
+			report_time = responseXml.find('general/report_date').text
+			remote_management = general.find('remote_management')
+			managed = remote_management.find('managed').text
+
+			print '\nGENERAL INFORMATION:'
+			print 'Computer Name: ' + strName
+			print 'Asset Number: ' + str(asset_tag)
+			print 'JSS Computer ID: ' + str(jssID)
+			print 'Serial Number: ' + str(sn)
+			print 'Mac Address: ' + str(mac_addr)
+			print 'Managed: ' + str(managed)
+			print 'Last Check-In: ' + str(last_contact_time)
+			print 'Last Inventory Update: ' + str(report_time)
+
+			assigned_user = responseXml.find('location/username').text
+			real_name = responseXml.find('location/real_name').text
+			email_address = responseXml.find('location/email_address').text
+			position = responseXml.find('location/position').text
+			phone = responseXml.find('location/phone').text
+			department = responseXml.find('location/department').text
+			building = responseXml.find('location/building').text
+			room = responseXml.find('location/room').text
+
+			print '\nUSER AND LOCATION:'
+			print 'Username: ' + str(assigned_user)
+			print 'Real Name: ' + str(real_name)
+			print 'Email: ' + str(email_address)
+			print 'Position: ' + str(position)
+			print 'Phone: ' + str(phone)
+			print 'Department: ' + str(department)
+			print 'Building: ' + str(building)
+			print 'Room: ' + str(room)
+
+
+			hardware = responseXml.find('hardware')
+			model = hardware.find('model').text
+			modelid = hardware.find('model_identifier').text
+			ram = hardware.find('total_ram').text
+			ram_gb = int(ram) / 1000
+			os_version = hardware.find('os_version').text
+			processor_type = hardware.find('processor_type').text
+			processor_speed = hardware.find('processor_speed').text
+
+			storage = hardware.find('storage')
+			device = storage.find('device')
+			disk_size = device.find('size').text
+			disk_size_gb = int(disk_size) / 1000
+			partition = device.find('partition')
+			fv2status = partition.find('filevault2_status').text
+
+			print '\nHARDWARE INFORMATION:'
+			print 'Model: ' + model
+			print 'Model ID: ' + modelid
+			print 'OS X Version: ' + os_version
+			print 'Processor: ' + processor_type + ' ' + processor_speed + ' MHz'
+			print 'RAM: ' + str(ram_gb) + ' GB'
+			print 'Disk Size: ' + str(disk_size_gb) + ' GB'
+			print 'FileVault2 Status: ' + str(fv2status)
+
+			extension_attributes = responseXml.find('extension_attributes')
+			eas = []
+
+			print '\nEXTENSION ATTRIBUTES:'
+
+			for ea in extension_attributes.findall('extension_attribute'):
+				eaName = ea.find('name').text
+				eaValue = ea.find('value').text
+				eaPair = str(eaName) + ': ' + str(eaValue)
+				eas += [ eaPair ]
+
+			print '\n'.join (sorted (eas))
+
+
+			groups_accounts = responseXml.find('groups_accounts')
+			computer_group_memberships = groups_accounts.find('computer_group_memberships')
+			#print computer_group_memberships
+
+			groups = []
+			for group in computer_group_memberships.findall('group'):
+				groupName = group.text
+				groups += [ groupName ]
+				#print groupName
+			print '\nGROUPS: '
+			print '\n'.join (sorted (groups))
+
+
+			local_accounts = groups_accounts.find('local_accounts')
+			localusers = []
+			for user in local_accounts.findall('user'):
+				username = user.find('name').text
+				localusers += [ username ]
+
+			print '\nUSERS: '
+			print '\n'.join (sorted (localusers))
+
+			print '\n'
+			#print prettify(responseXml)
+
+			#print etree.tostring(responseXml)
+
+		except UnicodeEncodeError as error:
+			print 'There was a problem parsing the data, likely an invalid character in one of the fields.\n'
+			print error
+
+		except AttributeError as error:
+			print 'There was a problem parsing the data, a required field may have a null value.\n'
+			print error
+
+	else:
+		print 'Failed to find computer with Serial Number ' + serial
 
 
 def getCompLocalAccounts(compID, username, password):
