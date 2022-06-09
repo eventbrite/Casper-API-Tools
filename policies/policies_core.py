@@ -282,7 +282,7 @@ def listPolicybyId(policyid, username, password):
 
 		## General Policy Information
 		general = responseXml.find('general')
-		name = general.find('name').text
+		polname = general.find('name').text
 		policy_id = general.find('id').text
 		enabled = general.find('enabled').text
 		trigger = general.find('trigger').text
@@ -299,11 +299,15 @@ def listPolicybyId(policyid, username, password):
 
 		for computer in computers.findall('computer'):
 			name = computer.find('name').text
-			members.append(name)
+			computerInfo = name.encode("utf-8")
+			# computerInfo = cleanupOutput(computerInfo)
+			# members.append(name)
+			members += [ computerInfo ]
 
 		for g in groups.findall('computer_group'):
 			group_name = g.find('name').text
-			comp_groups.append(group_name)
+			groupInfo = str(group_name)
+			comp_groups += [ groupInfo ]
 
 
 		## Package Configuration Information
@@ -317,7 +321,7 @@ def listPolicybyId(policyid, username, password):
 			pkglist.append({"Package Name": pkg_name, "Package Action": pkg_action})
 
 		## Add policy details to policyDict and return
-		policyDict = { "Policy Name": name,
+		policyDict = { "Policy Name": polname,
 					"Policy ID": policy_id,
 					"Policy Enabled": enabled,
 					"Policy Trigger": trigger,
